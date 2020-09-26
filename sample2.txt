@@ -1,0 +1,10 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleContexts #-}
+
+daml 1.2
+
+module Dammit.ImportSort
+  ( toSortedGroups
+  )
+where

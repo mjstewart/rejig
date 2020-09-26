@@ -1,0 +1,7 @@
+import       "matt"              A.B.C
+  ( Cat
+  , Dog
+  , Cow
+  )
+
+import       "matt" A.B (WeekDay, WeekDay (..), Month(Jan, Feb, Mar), most, all, (<$>))

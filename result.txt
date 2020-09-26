@@ -1,0 +1,1 @@
+ImportDecl {ideclName = Qual [ConId "Data"] (CConId (ConId "Functor")), ideclPkgQual = Just "aaa", ideclIsQual = True, ideclAs = Just (Qual [ConId "A",ConId "B"] (CConId (ConId "C"))), ideclHiding = Just (False,[IEThingWith (ConId "Month") [CConId (ConId "Jan"),CConId (ConId "Feb")],IEVar (VId (VarId "map")),IEVar (VId (VarId "app")),IEVar (VSym (VarSym "(<||>)"))])}
