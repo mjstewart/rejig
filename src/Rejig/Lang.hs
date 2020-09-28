@@ -21,3 +21,5 @@ postValidate validate p = do
 applyOr :: [(a -> Bool)] -> a -> Bool
 applyOr fs a =
  or $ fs <*> [a]
+
+

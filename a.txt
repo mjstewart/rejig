@@ -1,2 +1,4 @@
 import "aaa" qualified Data.Functor as
  A.B.C (Month (Jan, Feb), map, app, (<||>))
+
+import Data.Queue qualified as Q ((<<<=), many, take, cat, egg, atlas, Time(..), (!<), Day(Sun, Mon, Wed, Fri, Sat, Thur, Tue), Week)

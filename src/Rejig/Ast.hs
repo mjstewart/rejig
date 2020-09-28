@@ -25,19 +25,22 @@ data ImportDecl = ImportDecl
  -- ^ (True => hiding, names)
  } deriving (Show, Eq)
 
-newtype VarId = VarId Text
+newtype ImportDecls = ImportDecls { unImportDecls :: [ImportDecl] }
+  deriving newtype (Show, Eq)
+
+newtype VarId = VarId { unVarId :: Text }
   deriving stock (Show)
   deriving newtype (Eq)
 
-newtype VarSym = VarSym Text
+newtype VarSym = VarSym { unVarSym :: Text }
   deriving stock (Show)
   deriving newtype (Eq)
 
-newtype ConId = ConId Text
+newtype ConId = ConId { unConId :: Text }
   deriving stock (Show)
   deriving newtype (Eq)
 
-newtype ConSym = ConSym Text
+newtype ConSym = ConSym { unConSym :: Text }
   deriving stock (Show)
   deriving newtype (Eq)
 
