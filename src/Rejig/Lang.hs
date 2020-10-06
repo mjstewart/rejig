@@ -6,6 +6,8 @@ import qualified Data.Text as Text
 
 type Parser = Parsec Void Text
 
+runReader' = flip runReader
+
 postValidate ::
   (a -> Either Text a) ->
   Parser a ->
@@ -21,5 +23,3 @@ postValidate validate p = do
 applyOr :: [(a -> Bool)] -> a -> Bool
 applyOr fs a =
  or $ fs <*> [a]
-
-

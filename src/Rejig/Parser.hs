@@ -22,12 +22,9 @@ import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Text.Megaparsec.Debug
 import Prelude hiding (many, some)
 
-import qualified Control.Exception as Ex
 import qualified Data.Text as T
-import Text.PrettyPrint (render)
 import Rejig.Settings
 import Control.Monad.Reader
 
@@ -106,33 +103,3 @@ importDeclP = do
 importsP :: Parser ImportDecls
 importsP =
   ImportDecls <$> many importDeclP
-
-
-mkDefaultSettings :: IO Settings
-mkDefaultSettings =
-  pure $ Settings
-   { qualifiedStyle = QualifiedPre
-   }
-
-runPrettyRender :: (Pretty a) => Settings -> a -> String
-runPrettyRender settings source =
-  render $ runReader (showPretty source) settings
-
--- writeFormattedFile :: ReaderT Settings IO ()
--- writeFormattedFile = do
-  -- settings <- ask
-
-
-parseFile :: FilePath -> IO ()
-parseFile path = do
-  result <- Ex.try (readFileText path) :: IO (Either Ex.SomeException Text)
-  settings <- mkDefaultSettings
-
-  case result of
-    Left e -> pure ()
-    Right txt -> do
-      case runParser importsP "test" txt of
-        Left bundle -> writeFile "result.txt" (errorBundlePretty bundle)
-        Right res -> writeFile "result.txt" $ runPrettyRender settings res
-
-      pure ()

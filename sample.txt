@@ -21,8 +21,6 @@ import "ccc" DA.Cat
 import Data.List qualified
 
 
-
-
 import Data.Applicative.Hello qualified
 import DA.Time qualified
 import "ccc" DA.Apple

@@ -1,60 +1,27 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-
-
 module Rejig.Pretty where
 
 import Rejig.Ast
 import qualified Data.Set as Set
-import qualified Data.Text as Text
+import qualified Data.Text as T
 import Text.PrettyPrint
 import Prelude hiding (empty)
 import Control.Monad.Reader
 import Rejig.Settings
+import Rejig.Lang
 
-vgroups :: [[Doc]] -> Doc
-vgroups =
-  sep . (vcat <$>) . intersperse [newline]
+
+class Pretty a where
+  showPretty :: a -> Reader Settings Doc
 
 newline :: Doc
 newline =
   text ""
 
 ttext :: Text -> Doc
-ttext = text . Text.unpack
+ttext = text . T.unpack
 
 dot :: Doc
 dot = text "."
-
-class Pretty a where
-  showPretty :: a -> Reader Settings Doc
-
--- instance Pretty ModuleIds where
-  -- showPretty (ModuleIds mids) =
-    -- ttext $ Text.intercalate "." $ map unCon $ NE.toList mids
-
--- instance Pretty PackageImport where
-  -- showPretty =
-    -- maybe empty (doubleQuotes . ttext) . unPkgImport
-
--- instance Pretty SortedImportGroups where
-  -- showPretty =
-    -- vgroups . (fmap . fmap) showPretty . unGroup
-
--- instance Pretty ImportDecl where
-  -- showPretty (ImportSimple x) =
-    -- showPretty x
-  -- showPretty (ImportSimpleAll x) =
-    -- showPretty x <+> text "()"
-  -- showPretty (ImportAs x) =
-    -- showPretty x
-  -- showPretty (ImportSpec x) =
-    -- showPretty x
-  -- showPretty (ImportHidingSpec x) =
-    -- showPretty x
-  -- showPretty (ImportAsSpec x) =
-    -- showPretty x
-  -- showPretty (ImportAsHidingSpec x) =
-    -- showPretty x
 
 importText :: Doc
 importText =
@@ -72,149 +39,16 @@ hidingText :: Doc
 hidingText =
   text "hiding"
 
--- prettyPkg :: (HasPkg x PackageImport) => x -> Doc
--- prettyPkg =
-  -- showPretty . view pkg
-
--- prettyModIds :: (HasModIds x ModuleIds) => x -> Doc
--- prettyModIds =
-  -- showPretty . view modIds
-
--- prettyQualify :: (HasIsQual x Bool) => x -> Doc
--- prettyQualify  =
-  -- bool empty qualifiedText . view isQual
-
--- prettyAs :: (HasAs x ModuleIds) => x -> Doc
--- prettyAs =
-  -- showPretty . view as
-
--- prettySpecs :: (HasSpecs x SpecificImports) => x -> Doc
--- prettySpecs =
-  -- showPretty . view specs
-
--- prettyHiding :: (HasHiding x SpecificImports) => x -> Doc
--- prettyHiding =
-  -- showPretty . view hiding
-
--- instance Pretty ImportSimpleData where
-  -- showPretty x =
-    -- hsep
-      -- [ importText,
-        -- prettyPkg x,
-        -- prettyModIds x,
-        -- prettyQualify x
-      -- ]
-
--- instance Pretty ImportAsData where
-  -- showPretty x =
-    -- hsep
-      -- [ importText,
-        -- prettyPkg x,
-        -- prettyModIds x,
-        -- prettyQualify x,
-        -- asText,
-        -- prettyAs x
-      -- ]
-
--- instance Pretty ImportSpecData where
-  -- showPretty x =
-    -- hang
-      -- ( hsep
-          -- [ importText,
-            -- prettyPkg x,
-            -- prettyModIds x,
-            -- prettyQualify x
-          -- ]
-      -- )
-      -- 2
-      -- (prettySpecs x)
-
--- instance Pretty ImportHidingSpecData where
-  -- showPretty x =
-    -- hang
-      -- ( hsep
-          -- [ importText,
-            -- prettyPkg x,
-            -- prettyModIds x,
-            -- prettyQualify x,
-            -- hidingText
-          -- ]
-      -- )
-      -- 2
-      -- (prettyHiding x)
-
--- instance Pretty ImportAsSpecData where
-  -- showPretty x =
-    -- hang
-      -- ( hsep
-          -- [ importText,
-            -- prettyPkg x,
-            -- prettyModIds x,
-            -- prettyQualify x,
-            -- asText,
-            -- prettyAs x
-          -- ]
-      -- )
-      -- 2
-      -- (prettySpecs x)
-
--- instance Pretty ImportAsHidingSpecData where
-  -- showPretty x =
-    -- hang
-      -- ( hsep
-          -- [ importText,
-            -- prettyPkg x,
-            -- prettyModIds x,
-            -- prettyQualify x,
-            -- asText,
-            -- prettyAs x,
-            -- hidingText
-          -- ]
-      -- )
-      -- 2
-      -- (prettyHiding x)
-
--- instance Pretty SpecificImports where
-  -- showPretty (SpecificImports (x :| [])) =
-    -- parens $ showPretty x
-  -- showPretty (SpecificImports imports) =
-    -- layoutVerticalImports imports
-
--- layoutVerticalImports :: (Pretty a) => NonEmpty a -> Doc
--- layoutVerticalImports (x :| []) =
-  -- parens $ showPretty x
--- layoutVerticalImports (x :| xs) =
-  -- vcat
-    -- [ lparen <+> showPretty x,
-      -- vcat $ map ((comma <+>) . showPretty) xs,
-      -- rparen
-    -- ]
-
--- instance Pretty Import where
-  -- showPretty (ImportVar x) =
-    -- showPretty x
-  -- showPretty (ImportVarSym x) =
-    -- showPretty x
-  -- showPretty (ImportTyCon x) =
-    -- showPretty x
-  -- showPretty (ImportTyConAll x) =
-    -- showPretty x <+> "(..)"
-  -- showPretty (ImportTyConCNames tycon c) =
-    -- hang (showPretty tycon) 0 (layoutVerticalImports $ unCNames c)
-
--- | Inspired by https://hackage.haskell.org/package/ghc-lib-parser-8.10.1.20200324/docs/GHC-Hs-ImpExp.html#t:ImportDecl
--- data ImportDecl = ImportDecl
- -- { ideclName :: Qual
- -- -- ^ A ModuleName is essentially a string e.g. Data.List
- -- , ideclPkgQual :: Maybe Text
- -- -- ^ Package qualifier
- -- , ideclIsQual :: Bool
- -- -- ^ Does the qualified keyword appear
- -- , ideclAs :: Maybe Qual
- -- -- ^ as Module
- -- , ideclHiding :: Maybe (Bool, [IE])
- -- -- ^ (True => hiding, names)
- -- } deriving (Show, Eq)
+layoutVerticalImports :: Settings -> [IE] -> Doc
+layoutVerticalImports settings = \case
+  [] -> parens empty
+  [x] -> parens $ runReader (showPretty x) settings
+  (x:xs) ->
+    vcat
+      [ lparen <+> runReader (showPretty x) settings
+        , vcat $ map ((comma <+>) . runReader' settings . showPretty) xs
+        , rparen
+      ]
 
 prettyPkg :: ImportDecl -> Doc
 prettyPkg =
@@ -222,19 +56,39 @@ prettyPkg =
 
 prettyName :: Settings -> ImportDecl -> Doc
 prettyName settings x =
-  case qualifiedStyle settings of
-    QualifiedPre -> qualifiedText <+> modids
-    QualifiedPost -> modids <+> qualifiedText
+  if ideclIsQual x then
+    case qualifiedStyle settings of
+      QualifiedPre -> qualifiedText <+> modids
+      QualifiedPost -> modids <+> qualifiedText
+  else
+    modids
   where
-    modids = runReader (showPretty $ ideclName x) settings
+    modids = runReader' settings . showPretty $ ideclName x
 
-prettyHiding :: ImportDecl -> Doc
-prettyHiding x = empty
+preHiding :: ImportDecl -> Doc
+preHiding x =
+  maybe empty (\(isHiding, _) -> bool empty hidingText isHiding) $ ideclHiding x
+
+prettyHiding :: Settings -> ImportDecl -> Doc
+prettyHiding settings x =
+  case ideclHiding x of
+    Nothing -> empty
+    Just (_, ies) ->
+      layoutVerticalImports settings ies
+
+prettyAs :: Settings -> ImportDecl -> Doc
+prettyAs settings =
+  maybe empty ((asText <+>) . runReader' settings . showPretty) . ideclAs
+
+instance Pretty ImportDeclGroups where
+  showPretty x = do
+    settings <- ask
+    pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
 
 instance Pretty ImportDecls where
   showPretty x = do
     settings <- ask
-    pure . vcat . map (\decl -> runReader (showPretty decl) settings) $ unImportDecls x
+    pure . vcat . map (runReader' settings . showPretty) $ unImportDecls x
 
 instance Pretty ImportDecl where
   showPretty x = do
@@ -245,16 +99,32 @@ instance Pretty ImportDecl where
           [ importText
           , prettyPkg x
           , prettyName settings x
-            -- prettyModIds x,
-            -- prettyQualify x,
-            -- asText,
-            -- prettyAs x,
-            -- hidingText
+          , prettyAs settings x
+          , preHiding x
           ]
       )
       2
-      $ prettyHiding x
+      $ prettyHiding settings x
 
+instance Pretty IE where
+  showPretty (IEVar x) =
+    asks $ runReader (showPretty x)
+  showPretty (IEThingAbs x) =
+    asks $ \settings -> runReader (showPretty x) settings <+> parens empty
+  showPretty (IEThingAll x) =
+    asks $ \settings -> runReader (showPretty x) settings <+> parens (text "..")
+  showPretty (IEThingWith x xs) =
+    asks $ \settings ->
+      hsep
+        [ runReader (showPretty x) settings
+        , parens $ hsep $ punctuate comma $ map (runReader' settings . showPretty) xs
+        ]
+
+instance Pretty Var where
+  showPretty (VId x) =
+    asks $ runReader (showPretty x)
+  showPretty (VSym x) =
+    asks $ runReader (showPretty x)
 
 instance Pretty Pragma where
   showPretty (Pragma x) =
@@ -269,7 +139,7 @@ instance Pretty Qual where
     settings <- ask
     pure $
       hcat . intersperse dot $
-      map (\c -> runReader (showPretty c) settings) conids
+      map (runReader' settings . showPretty) conids
       ++ [runReader (showPretty cname) settings]
 
 instance Pretty CName where
@@ -297,18 +167,3 @@ instance Pretty ConId where
 instance Pretty ConSym where
   showPretty =
     pure . ttext . unConSym
-
-ex2 :: Doc
-ex2 =
-  nest 2 $
-    vcat
-      [ lparen <+> text "A",
-        (hsep [comma, text "B"]),
-        (hsep [comma, text "C"]),
-        (hsep [comma, text "D"]),
-        rparen
-      ]
-
-ex3 :: Doc
-ex3 =
-  vcat $ map (\x -> comma <+> text x) ["B", "C", "D", "E", "F"]

@@ -28,21 +28,24 @@ data ImportDecl = ImportDecl
 newtype ImportDecls = ImportDecls { unImportDecls :: [ImportDecl] }
   deriving newtype (Show, Eq)
 
+newtype ImportDeclGroups = ImportDeclGroups { unImportDeclGroups :: [ImportDecls] }
+  deriving newtype (Show, Eq)
+
 newtype VarId = VarId { unVarId :: Text }
   deriving stock (Show)
-  deriving newtype (Eq)
+  deriving newtype (Eq, Ord)
 
 newtype VarSym = VarSym { unVarSym :: Text }
   deriving stock (Show)
-  deriving newtype (Eq)
+  deriving newtype (Eq, Ord)
 
 newtype ConId = ConId { unConId :: Text }
   deriving stock (Show)
-  deriving newtype (Eq)
+  deriving newtype (Eq, Ord)
 
 newtype ConSym = ConSym { unConSym :: Text }
   deriving stock (Show)
-  deriving newtype (Eq)
+  deriving newtype (Eq, Ord)
 
 data Qual = Qual [ConId] CName
   deriving (Show, Eq)
@@ -54,10 +57,34 @@ data CName
   | CConSym ConSym
   deriving (Show, Eq)
 
+cnameIndex :: CName -> Int
+cnameIndex = \case
+  CVarId _ -> 0
+  CVarSym _ -> 1
+  CConId _ -> 2
+  CConSym _ -> 3
+
 data Var
   = VId VarId
   | VSym VarSym
   deriving (Show, Eq)
+
+varIndex :: Var -> Int
+varIndex = \case
+  VId _ -> 0
+  VSym _ -> 1
+
+instance Ord Var where
+  compare (VId a) (VId b) = compare a b
+  compare (VSym a) (VSym b) = compare a b
+  compare a b = compare (varIndex a) (varIndex b)
+
+instance Ord CName where
+  compare (CVarId a) (CVarId b) = compare a b
+  compare (CVarSym a) (CVarSym b) = compare a b
+  compare (CConId a) (CConId b) = compare a b
+  compare (CConSym a) (CConSym b) = compare a b
+  compare a b = compare (cnameIndex a) (cnameIndex b)
 
 data IE
   = IEVar Var
@@ -69,6 +96,21 @@ data IE
   | IEThingWith ConId [CName]
   -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
     deriving (Show, Eq)
+
+ieIndex :: IE -> Int
+ieIndex = \case
+  IEVar _ -> 0
+  IEThingAbs _ -> 1
+  IEThingAll _ -> 2
+  IEThingWith _ _ -> 3
+
+instance Ord IE where
+  compare (IEVar a) (IEVar b) = compare a b
+  compare (IEThingAbs a) (IEThingAbs b) = compare a b
+  compare (IEThingAll a) (IEThingAll b) = compare a b
+  compare (IEThingWith conidA namesA) (IEThingWith conidB namesB) =
+    compare conidA conidB <> compare namesA namesB
+
 
 data ModuleDecl = ModuleDecl
  { mmodid :: Text
