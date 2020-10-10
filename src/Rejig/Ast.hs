@@ -1,5 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module Rejig.Ast where
 
@@ -24,6 +25,18 @@ data ImportDecl = ImportDecl
  , ideclHiding :: Maybe (Bool, [IE])
  -- ^ (True => hiding, names)
  } deriving (Show, Eq)
+
+
+data PartitionedImports = PartitionedImports
+ { _piRest :: [[ImportDecl]]
+ , _piPrefixTargetGroups :: [CG ImportDeclGroups]
+ , _piPkgGroups :: [[ImportDecl]]
+ } deriving (Show, Eq)
+
+data CG a = CG
+ { _cgComment :: Maybe Text
+ , _cgGroup :: a
+ } deriving (Show, Eq, Functor)
 
 newtype ImportDecls = ImportDecls { unImportDecls :: [ImportDecl] }
   deriving newtype (Show, Eq)

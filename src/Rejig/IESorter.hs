@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Rejig.IESorter where
 
@@ -10,7 +11,13 @@ import Rejig.Lang (runReader')
 import qualified Data.Text as T
 
 import qualified Data.List as L
+import qualified Data.Map as Map
+import Data.Bifunctor (first)
 
+
+-- flatten :: TopLevelPartition -> ImportDeclGroups
+-- flatten p =
+  -- _partitionPrefixTargetGroups p -- ++ _partitionPrefixTargetGroups p ++ _partitionPkgGroups p
 
 -- on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
 
@@ -41,29 +48,105 @@ renderPretty settings =
 -- topLevelGroupBy f =
   -- L.groupBy (eq `on'` f) . L.sortBy (by f)
 
-sortImports :: ImportDecls -> Reader Settings ImportDeclGroups
+topLevelPartition :: [ImportDecl] -> Reader Settings PartitionedImports
+topLevelPartition decls = do
+  settings <- ask
+ -- ([CG [[ImportDecl]]], [ImportDecl])
+  -- (prefixTargetGroups, rest) <- partitionByPrefixes decls
+  (_piPrefixTargetGroups, rest) <- first (map $ fmap (sortPartitionGroup settings)) <$> (partitionByPrefixes decls)
+
+  let
+    _piPkgGroups = []
+    _piRest = []
+    -- m = map (fmap (process settings)) prefixTargetGroups
+    (pkgQuals, rest') = pkgQualGroups rest
+
+  pure $ PartitionedImports {..}
+  -- pure $ PartitionedImports
+   -- { _partitionPrefixTargetGroups =
+   -- , _partitionPkgGroups = pkgQuals
+   -- , _partitionRest = [rest']
+   -- }
+   where
+    sortPartitionGroup :: Settings -> [[ImportDecl]] -> ImportDeclGroups
+    sortPartitionGroup settings =
+      ImportDeclGroups . map (subsortGroup settings) . topLevelGroups2
+
+consTuple :: ([[a]], [a]) -> [[a]]
+consTuple (a, b) = b : a
+
+-- | (package import groups sorted by import qualifier, rest)
+pkgQualGroups :: [ImportDecl] -> ([[ImportDecl]], [ImportDecl])
+pkgQualGroups =
+  first subgroup . L.partition (isJust . ideclPkgQual)
+  where
+  -- sort and group by the package import qualifier
+  subgroup :: [ImportDecl] -> [[ImportDecl]]
+  subgroup =
+    L.groupBy (eq `on` getPkgQual) . L.sortBy (by getPkgQual)
+
+  getPkgQual =
+    maybe "" id . ideclPkgQual
+
+{-
+  ["celery.b", "apple.e", "celery.a", "apple.a"]
+
+  celery
+
+-}
+partitionByPrefixes :: [ImportDecl] -> Reader Settings ([CG [[ImportDecl]]], [ImportDecl])
+partitionByPrefixes decls = do
+  settings <- ask
+  pure $ foldr
+    (\prefix (acc, rest) ->
+      first (mergeTargets prefix acc) $ L.partition (T.isPrefixOf prefix . declName settings) rest
+    ) ([], decls) (groupByPrefix settings)
+  where
+    declName :: Settings -> ImportDecl -> Text
+    declName settings = T.pack . renderPretty settings . ideclName
+
+    mergeTargets :: Text -> [CG [[ImportDecl]]] -> [ImportDecl] -> [CG [[ImportDecl]]]
+    mergeTargets prefix acc targets =
+      if null targets then acc
+      else
+        CG
+          { _cgComment = Just $ "imports by " <> prefix <> "*"
+          , _cgGroup = [targets]
+          }
+        : acc
+
+
+sortImports :: ImportDecls -> Reader Settings PartitionedImports
 sortImports (ImportDecls decls) = do
   settings <- ask
-  pure $ ImportDeclGroups . map (subsortGroup settings) $ topLevelGroups settings decls
+  topLevelPartitions <- topLevelPartition decls
+  pure topLevelPartitions
+  -- pure $ flatten topLevelPartitions
+  -- pure $ ImportDeclGroups . map (subsortGroup settings) $ topLevelGroups settings decls
 
-topLevelGroups :: Settings -> [ImportDecl] -> [[ImportDecl]]
-topLevelGroups _ =
-  L.groupBy (eq `on` weight) . (L.sortBy (by weight) =<<)
-  . subGroupByPkgQual
-  . partitionByPkgQual
- where
-  -- partition into 2 groups (normal imports, package imports)
-  partitionByPkgQual :: [ImportDecl] -> [[ImportDecl]]
-  partitionByPkgQual =
-    L.groupBy (eq `on` pkgQualWeight) . L.sortBy (by pkgQualWeight)
+-- topLevelGroup2 :: [ImportDecl] -> [[ImportDecl]]
+-- topLevelGroups =
+  -- L.groupBy (eq `on` weight) . (L.sortBy (by weight) =<<)
+  -- . subGroupByPkgQual
+  -- . partitionByPkgQual
 
-  -- within the package imports partition, imports with the same qualifier get grouped together
-  subGroupByPkgQual :: [[ImportDecl]] -> [[ImportDecl]]
-  subGroupByPkgQual =
-    L.groupBy (eq `on` getPkgQual) . (L.sortBy (by getPkgQual) =<<)
-    where
-      getPkgQual =
-        maybe "" id . ideclPkgQual
+
+  -- pure $ ImportDeclGroups $ map (subsortGroup settings) $ topLevelGroups2 decls
+
+-- process :: [[ImportDecl]] -> Reader Settings ImportDeclGroups
+-- process decls = do
+  -- settings <- ask
+  -- pure $ ImportDeclGroups $ map (subsortGroup settings) $ topLevelGroups2 decls
+
+
+  -- pure $ ImportDeclGroups . map (subsortGroup settings) $ topLevelGroups settings decls
+
+
+
+topLevelGroups2 :: [[ImportDecl]] -> [[ImportDecl]]
+topLevelGroups2 decls = decls
+  >>= consTuple . pkgQualGroups
+  >>= L.groupBy (eq `on` weight) . L.sortBy (by weight)
 
 ieListLength :: ImportDecl -> Int
 ieListLength =
@@ -97,50 +180,6 @@ subsortGroup settings =
 
 
 
-
--- ieWeight :: IE -> Int
--- ieWeight = \case
-  -- IEVar v = weight
-
--- data ImportDecl = ImportDecl
- -- { ideclName :: Qual
- -- -- ^ A ModuleName is essentially a string e.g. Data.List
- -- , ideclPkgQual :: Maybe Text
- -- -- ^ Package qualifier
- -- , ideclIsQual :: Bool
- -- -- ^ Does the qualified keyword appear
- -- , ideclAs :: Maybe Qual
- -- -- ^ as Module
- -- , ideclHiding :: Maybe (Bool, [IE])
- -- -- ^ (True => hiding, names)
- -- } deriving (Show, Eq)
-
--- data CName
-  -- = CVarId VarId
-  -- | CVarSym VarSym
-  -- | CConId ConId
-  -- | CConSym ConSym
-  -- deriving (Show, Eq)
-
--- data Var
-  -- = VId VarId
-  -- | VSym VarSym
-  -- deriving (Show, Eq)
-
--- data IE
-  -- = IEVar Var
-  -- -- ^ Imported or Exported Variable
-  -- | IEThingAbs ConId
-  -- -- ^ Imported or exported Thing with Absent list, eg: Month ()
-  -- | IEThingAll ConId
-  -- -- ^ ClassType plus all methods/constructors, eg: Month(..)
-  -- | IEThingWith ConId [CName]
-  -- -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
-    -- deriving (Show, Eq)
-
--- instance Ord Var where
-  -- compare (VId (VarId a)) (VId (VarId b)) = a == b
-  -- compare (VSym (VarId a)) (VId (VarId b)) = a == b
 
 
 

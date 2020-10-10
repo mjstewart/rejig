@@ -34,7 +34,7 @@ import DA.Alphabet.Soup
 import "ccc" DA.Cat
 import Data.List qualified
 
-
+import Rejig.Main.App
 import Data.List3 as Li.Matt
 import Data.Apple.Cat as Cat.Dog.Me
 import qualified Data.Apple.Cat1 as Cat.Dog.Me1
@@ -43,6 +43,8 @@ import Data.Apple.Cat2 qualified as Cat.Dog.Me2
 
 import Data.Applicative.Hello qualified
 import DA.Time qualified
+import qualified Rejig.Main.Domain as D.Serv
+
 import "ccc" DA.Apple qualified as B
 import DA.Traversable qualified
 import Data.Queue qualified as Q ((<<<=), many, take, cat, egg, atlas, Time(..), (!<), Day(Sun, Mon, Wed, Fri, Sat, Thur, Tue), Week)
@@ -50,6 +52,7 @@ import "ccc" DA.Adelaide
 import DA.Prelude ()
 import Data.List as L
 import "ccc" DA.Apple (Car(Holden, Ford, Honda), berry, water)
+import qualified Rejig.Main.Service as S ( red, Sale (Discount, Free, Summond), (<*!*>))
 import Data.Applicative.C qualified as B
 import Data.Applicative qualified as App
 import "aaa" Data.Applicative qualified as App (Month(Ca, Cd, Bd, Ba, Aq, Aa, Am), App(..), Order, Base, House(Residential, Commercial, Retail))
@@ -59,6 +62,9 @@ actor, ant, Bart (..), zoo, Apple (..), Queue, Month(Mar, Feb, Jan, Apr, Aug), Y
 import Data.Monad ()
 import DA.Apex.B
 import DA.Apex.A
+import Rejig.Main.Core
+import Rejig.Main.Workbench ()
 import Data.Test.Queue qualified as A hiding (d, e, ap)
 import Data.App.Apple.Hide qualified as Hi hiding ((<<<=), any, ba, dog, acting,
 actor, ant, Bart (..), zoo, Apple (..), Queue, Month(Mar, Feb, Jan, Apr, Aug), Year(..), bed, bandaid, (!<!>!))
+import Rejig.Main.AppZone

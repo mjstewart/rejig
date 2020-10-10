@@ -18,6 +18,7 @@ mkDefaultSettings :: IO Settings
 mkDefaultSettings =
   pure $ Settings
    { qualifiedStyle = QualifiedPre
+   , groupByPrefix = ["DA.", "Rejig"]
    }
 
 -- runPrettyRender :: Pretty a => Settings -> a -> String

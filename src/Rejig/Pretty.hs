@@ -27,6 +27,10 @@ importText :: Doc
 importText =
   text "import"
 
+singleLineComment :: Text -> Doc
+singleLineComment =
+  (text "--" <+>) . ttext
+
 qualifiedText :: Doc
 qualifiedText =
   text "qualified"
@@ -79,6 +83,24 @@ prettyHiding settings x =
 prettyAs :: Settings -> ImportDecl -> Doc
 prettyAs settings =
   maybe empty ((asText <+>) . runReader' settings . showPretty) . ideclAs
+
+instance Pretty PartitionedImports where
+  showPretty x = do
+    settings <- ask
+
+    vcat <$> (mapM prettyCG $ _piPrefixTargetGroups x)
+    -- pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
+
+prettyCG :: Pretty a => CG a -> Reader Settings Doc
+prettyCG cg = do
+  settings <- ask
+  pure $ vcat
+   [ comment
+   , runReader' settings $ showPretty $ _cgGroup cg
+   ]
+  where
+    comment = maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $  _cgComment cg
+
 
 instance Pretty ImportDeclGroups where
   showPretty x = do

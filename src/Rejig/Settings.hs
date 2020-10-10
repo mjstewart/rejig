@@ -16,5 +16,6 @@ type AppSettings = Reader Settings Settings
 
 data Settings = Settings
  { qualifiedStyle :: ImportDeclQualifiedStyleSource
+   , groupByPrefix :: [Text]
  }
   deriving (Show, Eq)
