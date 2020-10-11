@@ -1,6 +1,105 @@
+import Data.Applicative.Hello
+import Data.List
 
--- imports by DA.*
+import Apple ()
+import Bat ()
+import Data.Apple ()
+import Data.Monad ()
+import Data.Query.Lang ()
+import Data.Text ()
+import Zoo ()
 
+import Data.Apple.Cat as Cat.Dog.Me
+import Data.List as L
+import Data.List3 as Li.Matt
+
+import qualified Data.Applicative.Hello
+import qualified Data.List
+
+import qualified Data.Apple.Cat1 as Cat.Dog.Me1
+import qualified Data.Apple.Cat2 as Cat.Dog.Me2
+import qualified Data.Applicative as App
+import qualified Data.Applicative.C as B
+
+import qualified Data.App.Apple.Hide as Hi hiding
+  ( acting
+  , actor
+  , ant
+  , any
+  , ba
+  , bandaid
+  , bed
+  , dog
+  , zoo
+  , (!<!>!)
+  , (<<<=)
+  , Queue ()
+  , Apple (..)
+  , Bart (..)
+  , Year (..)
+  , Month (Apr, Aug, Feb, Jan, Mar)
+  )
+import qualified Data.Test.Queue as A hiding
+  ( ap
+  , d
+  , e
+  )
+
+import qualified Data.App.Apple as A
+  ( acting
+  , actor
+  , ant
+  , any
+  , ba
+  , bandaid
+  , bed
+  , dog
+  , zoo
+  , (!<!>!)
+  , (<<<=)
+  , Queue ()
+  , Apple (..)
+  , Bart (..)
+  , Year (..)
+  , Month (Apr, Aug, Feb, Jan, Mar)
+  )
+import qualified Data.Queue as Q
+  ( atlas
+  , cat
+  , egg
+  , many
+  , take
+  , (!<)
+  , (<<<=)
+  , Week ()
+  , Time (..)
+  , Day (Fri, Mon, Sat, Sun, Thur, Tue, Wed)
+  )
+import qualified Data.Queue as Q
+  ( atlas
+  , cat
+  , egg
+  , many
+  , take
+  , (!<)
+  , (<<<=)
+  , Week ()
+  , Time (..)
+  , Day (Fri, Mon, Sat, Sun, Thur, Tue, Wed)
+  )
+import qualified Data.Semaphore.Ident as Q.Sem
+  ( atlas
+  , cat
+  , egg
+  , many
+  , take
+  , (!<)
+  , (<<<=)
+  , Week ()
+  , Time (..)
+  , Day (Fri, Mon, Sat, Sun, Thur, Tue, Wed)
+  , ZooLand (ant, dog, fox, zebra)
+  )
 import DA.Alphabet.Soup
 import DA.Apex.A
 import DA.Apex.B
@@ -49,9 +148,6 @@ import "ccc" DA.Apple
   )
 
 import "ccc" qualified DA.Apple as B
-
--- imports by Rejig*
-
 import Rejig.Main.App
 import Rejig.Main.AppZone
 import Rejig.Main.Core
@@ -65,3 +161,23 @@ import qualified Rejig.Main.Service as S
   , (<*!*>)
   , Sale (Discount, Free, Summond)
   )
+import "aaa" Data.Core.Cap
+import "aaa" Data.List
+
+import "aaa" qualified Data.Applicative as App
+  ( Base ()
+  , Order ()
+  , App (..)
+  , House (Commercial, Residential, Retail)
+  , Month (Aa, Am, Aq, Ba, Bd, Ca, Cd)
+  )
+import "aaa" qualified Data.Functor as A.B.C
+  ( app
+  , map
+  , (<||>)
+  , Month (mar, may, Apr, Feb, Jan, June)
+  )
+
+import "bbb" Data.Applicative.Hello
+
+import "bbb" qualified Data.Functor as F

@@ -1,7 +1,9 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Rejig.IESorter where
+module Rejig.IESorter
+ (sortImports)
+where
 
 import Rejig.Ast
 import Rejig.Pretty (showPretty, Pretty)
@@ -14,25 +16,24 @@ import qualified Data.List as L
 import qualified Data.Map as Map
 import Data.Bifunctor (first)
 
+sortImports :: ImportDecls -> Reader Settings PartitionedImports
+sortImports (ImportDecls decls) = do
+  settings <- ask
+  (_piPrefixTargets, rest) <- first (map $ fmap (sortGroups settings)) <$> (byPrefixPartition decls)
 
--- flatten :: TopLevelPartition -> ImportDeclGroups
--- flatten p =
-  -- _partitionPrefixTargetGroups p -- ++ _partitionPrefixTargetGroups p ++ _partitionPkgGroups p
+  let
+    (_piPkgQuals, rest') = first (CG (Just "package qualified") . sortGroups settings) $ pkgQualGroups rest
+    _piRest = CG (Just "standard imports") $ sortGroups settings [rest']
 
--- on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
-
--- groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
-
--- comparing :: Ord a => (b -> a) -> b -> b -> Ordering
--- sortBy :: (a -> a -> Ordering) -> [a] -> [a]
+  pure $ PartitionedImports {..}
+   where
+    sortGroups :: Settings -> [[ImportDecl]] -> ImportDeclGroups
+    sortGroups settings =
+      ImportDeclGroups . map (sortSubgroup settings) . sortTopLevel
 
 comparingBy:: [a -> a -> Ordering] -> a -> a -> Ordering
 comparingBy fs a b =
   mconcat $ [(\x -> x a b)] <*> fs
-
-on' :: (a -> a -> c) -> (b -> a) -> b -> b -> c
-on' f g a b =
-  f (g a) (g b)
 
 by :: Ord a => (b -> a) -> b -> b -> Ordering
 by f = comparing f
@@ -44,43 +45,11 @@ renderPretty :: Pretty a => Settings -> a -> String
 renderPretty settings =
   render . runReader' settings . showPretty
 
--- topLevelGroupBy :: Ord b => (b -> a) -> [b] -> [[a]]
--- topLevelGroupBy f =
-  -- L.groupBy (eq `on'` f) . L.sortBy (by f)
-
-topLevelPartition :: [ImportDecl] -> Reader Settings PartitionedImports
-topLevelPartition decls = do
-  settings <- ask
- -- ([CG [[ImportDecl]]], [ImportDecl])
-  -- (prefixTargetGroups, rest) <- partitionByPrefixes decls
-  (_piPrefixTargetGroups, rest) <- first (map $ fmap (sortPartitionGroup settings)) <$> (partitionByPrefixes decls)
-
-  let
-    _piPkgGroups = []
-    _piRest = []
-    -- m = map (fmap (process settings)) prefixTargetGroups
-    (pkgQuals, rest') = pkgQualGroups rest
-
-  pure $ PartitionedImports {..}
-  -- pure $ PartitionedImports
-   -- { _partitionPrefixTargetGroups =
-   -- , _partitionPkgGroups = pkgQuals
-   -- , _partitionRest = [rest']
-   -- }
-   where
-    sortPartitionGroup :: Settings -> [[ImportDecl]] -> ImportDeclGroups
-    sortPartitionGroup settings =
-      ImportDeclGroups . map (subsortGroup settings) . topLevelGroups2
-
-consTuple :: ([[a]], [a]) -> [[a]]
-consTuple (a, b) = b : a
-
--- | (package import groups sorted by import qualifier, rest)
+-- | (subgrouped pgk quals, rest)
 pkgQualGroups :: [ImportDecl] -> ([[ImportDecl]], [ImportDecl])
 pkgQualGroups =
   first subgroup . L.partition (isJust . ideclPkgQual)
   where
-  -- sort and group by the package import qualifier
   subgroup :: [ImportDecl] -> [[ImportDecl]]
   subgroup =
     L.groupBy (eq `on` getPkgQual) . L.sortBy (by getPkgQual)
@@ -88,19 +57,14 @@ pkgQualGroups =
   getPkgQual =
     maybe "" id . ideclPkgQual
 
-{-
-  ["celery.b", "apple.e", "celery.a", "apple.a"]
-
-  celery
-
--}
-partitionByPrefixes :: [ImportDecl] -> Reader Settings ([CG [[ImportDecl]]], [ImportDecl])
-partitionByPrefixes decls = do
+-- | Groups together any user defined prefixes
+byPrefixPartition :: [ImportDecl] -> Reader Settings ([CG [[ImportDecl]]], [ImportDecl])
+byPrefixPartition decls = do
   settings <- ask
   pure $ foldr
     (\prefix (acc, rest) ->
       first (mergeTargets prefix acc) $ L.partition (T.isPrefixOf prefix . declName settings) rest
-    ) ([], decls) (groupByPrefix settings)
+    ) ([], decls) $ _sGroupByPrefix settings
   where
     declName :: Settings -> ImportDecl -> Text
     declName settings = T.pack . renderPretty settings . ideclName
@@ -115,45 +79,15 @@ partitionByPrefixes decls = do
           }
         : acc
 
-
-sortImports :: ImportDecls -> Reader Settings PartitionedImports
-sortImports (ImportDecls decls) = do
-  settings <- ask
-  topLevelPartitions <- topLevelPartition decls
-  pure topLevelPartitions
-  -- pure $ flatten topLevelPartitions
-  -- pure $ ImportDeclGroups . map (subsortGroup settings) $ topLevelGroups settings decls
-
--- topLevelGroup2 :: [ImportDecl] -> [[ImportDecl]]
--- topLevelGroups =
-  -- L.groupBy (eq `on` weight) . (L.sortBy (by weight) =<<)
-  -- . subGroupByPkgQual
-  -- . partitionByPkgQual
-
-
-  -- pure $ ImportDeclGroups $ map (subsortGroup settings) $ topLevelGroups2 decls
-
--- process :: [[ImportDecl]] -> Reader Settings ImportDeclGroups
--- process decls = do
-  -- settings <- ask
-  -- pure $ ImportDeclGroups $ map (subsortGroup settings) $ topLevelGroups2 decls
-
-
-  -- pure $ ImportDeclGroups . map (subsortGroup settings) $ topLevelGroups settings decls
-
-
-
-topLevelGroups2 :: [[ImportDecl]] -> [[ImportDecl]]
-topLevelGroups2 decls = decls
-  >>= consTuple . pkgQualGroups
+sortTopLevel :: [[ImportDecl]] -> [[ImportDecl]]
+sortTopLevel decls = decls
+  >>= withPkgQualsLast . pkgQualGroups
   >>= L.groupBy (eq `on` weight) . L.sortBy (by weight)
+  where
+    withPkgQualsLast (pkgs, rest) = rest : pkgs
 
-ieListLength :: ImportDecl -> Int
-ieListLength =
-  maybe 0 (length . snd) . ideclHiding
-
-subsortGroup :: Settings -> [ImportDecl] -> ImportDecls
-subsortGroup settings =
+sortSubgroup :: Settings -> [ImportDecl] -> ImportDecls
+sortSubgroup settings =
   ImportDecls . L.sortBy
     (comparingBy [ by (renderPretty settings . ideclName)])
     . map sortSpecificImports
@@ -178,14 +112,6 @@ subsortGroup settings =
       IEThingWith conid names -> IEThingWith conid (sort names)
       x -> x
 
-
-
-
-
-
-pkgQualWeight :: ImportDecl -> Int
-pkgQualWeight =
-  maybe 0 (const 1) . ideclPkgQual
 
 class Weight x where
   weight :: x -> Int

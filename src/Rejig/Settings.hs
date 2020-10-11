@@ -15,7 +15,8 @@ data SourceLang
 type AppSettings = Reader Settings Settings
 
 data Settings = Settings
- { qualifiedStyle :: ImportDeclQualifiedStyleSource
-   , groupByPrefix :: [Text]
+ { _sQualifiedStyle :: ImportDeclQualifiedStyleSource
+ , _sGroupByPrefix :: [Text]
+ , _sShowGroupComments :: Bool
  }
   deriving (Show, Eq)

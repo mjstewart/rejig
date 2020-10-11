@@ -17,8 +17,9 @@ main = putStrLn "Hello, Haskell!"
 mkDefaultSettings :: IO Settings
 mkDefaultSettings =
   pure $ Settings
-   { qualifiedStyle = QualifiedPre
-   , groupByPrefix = ["DA.", "Rejig"]
+   { _sQualifiedStyle = QualifiedPre
+   , _sGroupByPrefix = ["DA.", "Rejig"]
+   , _sShowGroupComments = True
    }
 
 -- runPrettyRender :: Pretty a => Settings -> a -> String

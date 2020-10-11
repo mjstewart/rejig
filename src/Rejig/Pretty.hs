@@ -61,7 +61,7 @@ prettyPkg =
 prettyName :: Settings -> ImportDecl -> Doc
 prettyName settings x =
   if ideclIsQual x then
-    case qualifiedStyle settings of
+    case _sQualifiedStyle settings of
       QualifiedPre -> qualifiedText <+> modids
       QualifiedPost -> modids <+> qualifiedText
   else
@@ -88,18 +88,28 @@ instance Pretty PartitionedImports where
   showPretty x = do
     settings <- ask
 
-    vcat <$> (mapM prettyCG $ _piPrefixTargetGroups x)
+    liftA3 (\a b c -> vcat [a, b, c])
+      (prettyCG $ _piRest x)
+      (vcat <$> (mapM prettyCG $ _piPrefixTargets x))
+      (prettyCG $ _piPkgQuals x)
+
+      -- <*> (prettyCG $ _piPrefixTargets x)
+      -- <*> (mapM prettyCG $ _piPkgQuals x )
+
     -- pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
 
 prettyCG :: Pretty a => CG a -> Reader Settings Doc
 prettyCG cg = do
   settings <- ask
   pure $ vcat
-   [ comment
+   [ comment settings
    , runReader' settings $ showPretty $ _cgGroup cg
    ]
   where
-    comment = maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $  _cgComment cg
+    comment settings =
+      if _sShowGroupComments settings then
+        maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $  _cgComment cg
+      else empty
 
 
 instance Pretty ImportDeclGroups where

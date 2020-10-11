@@ -28,9 +28,9 @@ data ImportDecl = ImportDecl
 
 
 data PartitionedImports = PartitionedImports
- { _piRest :: [[ImportDecl]]
- , _piPrefixTargetGroups :: [CG ImportDeclGroups]
- , _piPkgGroups :: [[ImportDecl]]
+ { _piRest :: CG ImportDeclGroups
+ , _piPrefixTargets :: [CG ImportDeclGroups]
+ , _piPkgQuals :: CG ImportDeclGroups
  } deriving (Show, Eq)
 
 data CG a = CG
@@ -86,6 +86,10 @@ varIndex :: Var -> Int
 varIndex = \case
   VId _ -> 0
   VSym _ -> 1
+
+-- custom instances are needed since the comparison is done on the wrapped type.
+-- The {type}Index function exists to use the overall ordering to avoid having to
+-- declare every permutation.
 
 instance Ord Var where
   compare (VId a) (VId b) = compare a b
