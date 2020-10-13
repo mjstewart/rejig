@@ -1,62 +1,67 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveFunctor #-}
 
 module Rejig.Ast where
 
 -- {-# LANGUAGE <Extension> #-}
-newtype Pragma = Pragma { unPragma :: Text }
+newtype Pragma = Pragma {unPragma :: Text}
   deriving (Show, Eq)
 
 -- {-# OPTIONS_GHC -Wno-all-case #-}
-newtype GhcOption = GhcOption { unGhcOption :: Text }
+newtype GhcOption = GhcOption {unGhcOption :: Text}
   deriving (Show, Eq)
 
 -- | Inspired by https://hackage.haskell.org/package/ghc-lib-parser-8.10.1.20200324/docs/GHC-Hs-ImpExp.html#t:ImportDecl
 data ImportDecl = ImportDecl
- { ideclName :: Qual
- -- ^ A ModuleName is essentially a string e.g. Data.List
- , ideclPkgQual :: Maybe Text
- -- ^ Package qualifier
- , ideclIsQual :: Bool
- -- ^ Does the qualified keyword appear
- , ideclAs :: Maybe Qual
- -- ^ as Module
- , ideclHiding :: Maybe (Bool, [IE])
- -- ^ (True => hiding, names)
- } deriving (Show, Eq)
+  { -- | A ModuleName is essentially a string e.g. Data.List
+    ideclName :: Qual,
+    -- | Package qualifier
+    ideclPkgQual :: Maybe Text,
+    -- | Does the qualified keyword appear
+    ideclIsQual :: Bool,
+    -- | as Module
+    ideclAs :: Maybe Qual,
+    -- | (True => hiding, names)
+    ideclHiding :: Maybe (Bool, [IE])
+  }
+  deriving (Show, Eq)
 
+data ExportDecl = ExportDecl
+  {}
 
 data PartitionedImports = PartitionedImports
- { _piRest :: CG ImportDeclGroups
- , _piPrefixTargets :: [CG ImportDeclGroups]
- , _piPkgQuals :: CG ImportDeclGroups
- } deriving (Show, Eq)
+  { _piRest :: CG ImportDeclGroups,
+    _piPrefixTargets :: [CG ImportDeclGroups],
+    _piPkgQuals :: CG ImportDeclGroups
+  }
+  deriving (Show, Eq)
 
 data CG a = CG
- { _cgComment :: Maybe Text
- , _cgGroup :: a
- } deriving (Show, Eq, Functor)
+  { _cgComment :: Maybe Text,
+    _cgGroup :: a
+  }
+  deriving (Show, Eq, Functor)
 
-newtype ImportDecls = ImportDecls { unImportDecls :: [ImportDecl] }
+newtype ImportDecls = ImportDecls {unImportDecls :: [ImportDecl]}
   deriving newtype (Show, Eq)
 
-newtype ImportDeclGroups = ImportDeclGroups { unImportDeclGroups :: [ImportDecls] }
+newtype ImportDeclGroups = ImportDeclGroups {unImportDeclGroups :: [ImportDecls]}
   deriving newtype (Show, Eq)
 
-newtype VarId = VarId { unVarId :: Text }
+newtype VarId = VarId {unVarId :: Text}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
-newtype VarSym = VarSym { unVarSym :: Text }
+newtype VarSym = VarSym {unVarSym :: Text}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
-newtype ConId = ConId { unConId :: Text }
+newtype ConId = ConId {unConId :: Text}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
-newtype ConSym = ConSym { unConSym :: Text }
+newtype ConSym = ConSym {unConSym :: Text}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
@@ -104,15 +109,15 @@ instance Ord CName where
   compare a b = compare (cnameIndex a) (cnameIndex b)
 
 data IE
-  = IEVar Var
-  -- ^ Imported or Exported Variable
-  | IEThingAbs ConId
-  -- ^ Imported or exported Thing with Absent list, eg: Month ()
-  | IEThingAll ConId
-  -- ^ ClassType plus all methods/constructors, eg: Month(..)
-  | IEThingWith ConId [CName]
-  -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
-    deriving (Show, Eq)
+  = -- | Imported or Exported Variable
+    IEVar Var
+  | -- | Imported or exported Thing with Absent list, eg: Month ()
+    IEThingAbs ConId
+  | -- | ClassType plus all methods/constructors, eg: Month(..)
+    IEThingAll ConId
+  | -- | ClassType plus some methods/constructors eg: Month(Jan, Feb)
+    IEThingWith ConId [CName]
+  deriving (Show, Eq)
 
 ieIndex :: IE -> Int
 ieIndex = \case
@@ -128,14 +133,26 @@ instance Ord IE where
   compare (IEThingWith conidA namesA) (IEThingWith conidB namesB) =
     compare conidA conidB <> compare namesA namesB
 
+-- data EThing
+  -- = EThingVar QVar
+    -- -- ^ Exported Variable
+  -- | EThingAll QConId
+    -- -- ^ ClassType plus all methods/constructors, eg: Month(..)
+  -- | EThingWith QConId [CName]
+    -- -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
+  -- deriving (Show, Eq)
 
-data ModuleDecl = ModuleDecl
- { mmodid :: Text
- , exports :: [ImportDecl]
- , body :: Text
- } deriving (Show, Eq)
+data ModuleHeader = ModuleHeader
+  { _modLangExts :: [Text]
+  , _modGhcOpts :: [Text]
+  , _modName :: Text
+  , _modExports :: [ImportDecl]
+  , _modImports :: [ImportDecl]
+  , _modBody :: Text
+  }
+  deriving (Show, Eq)
 
-data Program
-  = LanguageExtensions [Text]
-  | Module ModuleDecl
-   deriving (Show, Eq)
+-- data Program
+  -- = LanguageExtensions [Text]
+  -- | Module ModuleDecl
+  -- deriving (Show, Eq)

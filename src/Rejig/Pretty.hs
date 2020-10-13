@@ -1,14 +1,13 @@
 module Rejig.Pretty where
 
-import Rejig.Ast
+import Control.Monad.Reader
 import qualified Data.Set as Set
 import qualified Data.Text as T
+import Rejig.Ast
+import Rejig.Lang
+import Rejig.Settings
 import Text.PrettyPrint
 import Prelude hiding (empty)
-import Control.Monad.Reader
-import Rejig.Settings
-import Rejig.Lang
-
 
 class Pretty a where
   showPretty :: a -> Reader Settings Doc
@@ -47,25 +46,24 @@ layoutVerticalImports :: Settings -> [IE] -> Doc
 layoutVerticalImports settings = \case
   [] -> parens empty
   [x] -> parens $ runReader (showPretty x) settings
-  (x:xs) ->
+  (x : xs) ->
     vcat
-      [ lparen <+> runReader (showPretty x) settings
-        , vcat $ map ((comma <+>) . runReader' settings . showPretty) xs
-        , rparen
+      [ lparen <+> runReader (showPretty x) settings,
+        vcat $ map ((comma <+>) . runReader' settings . showPretty) xs,
+        rparen
       ]
 
 prettyPkg :: ImportDecl -> Doc
 prettyPkg =
-   maybe empty (doubleQuotes . ttext) . ideclPkgQual
+  maybe empty (doubleQuotes . ttext) . ideclPkgQual
 
 prettyName :: Settings -> ImportDecl -> Doc
 prettyName settings x =
-  if ideclIsQual x then
-    case _sQualifiedStyle settings of
+  if ideclIsQual x
+    then case _sQualifiedStyle settings of
       QualifiedPre -> qualifiedText <+> modids
       QualifiedPost -> modids <+> qualifiedText
-  else
-    modids
+    else modids
   where
     modids = runReader' settings . showPretty $ ideclName x
 
@@ -88,29 +86,30 @@ instance Pretty PartitionedImports where
   showPretty x = do
     settings <- ask
 
-    liftA3 (\a b c -> vcat [a, b, c])
+    liftA3
+      (\a b c -> vcat [a, b, c])
       (prettyCG $ _piRest x)
       (vcat <$> (mapM prettyCG $ _piPrefixTargets x))
       (prettyCG $ _piPkgQuals x)
 
-      -- <*> (prettyCG $ _piPrefixTargets x)
-      -- <*> (mapM prettyCG $ _piPkgQuals x )
+-- <*> (prettyCG $ _piPrefixTargets x)
+-- <*> (mapM prettyCG $ _piPkgQuals x )
 
-    -- pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
+-- pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
 
 prettyCG :: Pretty a => CG a -> Reader Settings Doc
 prettyCG cg = do
   settings <- ask
-  pure $ vcat
-   [ comment settings
-   , runReader' settings $ showPretty $ _cgGroup cg
-   ]
+  pure $
+    vcat
+      [ comment settings,
+        runReader' settings $ showPretty $ _cgGroup cg
+      ]
   where
     comment settings =
-      if _sShowGroupComments settings then
-        maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $  _cgComment cg
-      else empty
-
+      if _sShowGroupComments settings
+        then maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $ _cgComment cg
+        else empty
 
 instance Pretty ImportDeclGroups where
   showPretty x = do
@@ -126,17 +125,18 @@ instance Pretty ImportDecl where
   showPretty x = do
     settings <- ask
 
-    pure $ hang
-      ( hsep
-          [ importText
-          , prettyPkg x
-          , prettyName settings x
-          , prettyAs settings x
-          , preHiding x
-          ]
-      )
-      2
-      $ prettyHiding settings x
+    pure $
+      hang
+        ( hsep
+            [ importText,
+              prettyPkg x,
+              prettyName settings x,
+              prettyAs settings x,
+              preHiding x
+            ]
+        )
+        2
+        $ prettyHiding settings x
 
 instance Pretty IE where
   showPretty (IEVar x) =
@@ -148,8 +148,8 @@ instance Pretty IE where
   showPretty (IEThingWith x xs) =
     asks $ \settings ->
       hsep
-        [ runReader (showPretty x) settings
-        , parens $ hsep $ punctuate comma $ map (runReader' settings . showPretty) xs
+        [ runReader (showPretty x) settings,
+          parens $ hsep $ punctuate comma $ map (runReader' settings . showPretty) xs
         ]
 
 instance Pretty Var where
@@ -171,8 +171,8 @@ instance Pretty Qual where
     settings <- ask
     pure $
       hcat . intersperse dot $
-      map (runReader' settings . showPretty) conids
-      ++ [runReader (showPretty cname) settings]
+        map (runReader' settings . showPretty) conids
+          ++ [runReader (showPretty cname) settings]
 
 instance Pretty CName where
   showPretty (CVarId x) =
