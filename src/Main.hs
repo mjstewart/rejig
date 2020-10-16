@@ -4,7 +4,7 @@ import qualified Control.Exception as Ex
 import Data.Text as T
 import qualified Data.Text as T
 import Rejig.IESorter (sortImports)
-import Rejig.Parser (importsP)
+import Rejig.Parser
 import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
 import Text.Megaparsec
@@ -41,11 +41,14 @@ parseFile path = do
   case result of
     Left e -> pure ()
     Right txt -> do
-      case runParser importsP "test" txt of
+      -- case runParser leadingCommentsP "test" txt of
+      case runParser parseSourceP "test" txt of
         Left bundle -> writeFile "result.txt" (errorBundlePretty bundle)
         Right res ->
           writeFile "result.txt" $
-            render $ runReader (showPretty $ runReader (sortImports res) settings) settings
+            -- render $ runReader (showPretty $ runReader (sortImports res) settings) settings
+            render $ runReader (showPretty res) settings
+            --render $ show res
 
       pure ()
 

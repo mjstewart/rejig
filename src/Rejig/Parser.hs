@@ -15,6 +15,7 @@ import qualified Data.Text as Text
 import Data.Void
 import Rejig.Ast
 import Rejig.Lang
+import Text.Megaparsec.Debug
 import Rejig.Lexer
 import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
@@ -24,20 +25,16 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import Prelude hiding (many, some)
 
 -- | {-# LANGUAGE <Extension> #-}
-pragmaP :: Parser Pragma
-pragmaP =
-  Pragma . T.pack
-    <$> (p "{-#" *> keyword "language" *> manyTill letterChar (sc *> p "#-}"))
-  where
-    p = lexeme . string
+langExtP :: Parser LangExt
+langExtP =
+  LangExt . T.pack
+    <$> (pragma $ lexeme (keyword "language" *> many letterChar))
 
 -- {-# OPTIONS_GHC -Wno-all-case #-}
 ghcOptionP :: Parser GhcOption
 ghcOptionP =
   GhcOption . T.pack
-    <$> (p "{-#" *> keyword "options_ghc" *> manyTill (letterChar <|> char '-') (sc *> p "#-}"))
-  where
-    p = lexeme . string
+    <$> (pragma $ lexeme (keyword "options_ghc" *> many (letterChar <|> char '-')))
 
 -- | The things in an import/export body
 ieP :: Parser [IE]
@@ -47,25 +44,28 @@ ieP =
       [ try thingWithP,
         try thingAllP,
         try thingAbsP,
+        try moduleContents,
         varP
       ]
       `sepBy` comma
   where
-    varP = try (VId <$> varid) <|> (VSym <$> varsym) <&> IEVar
+    varP = try (VId <$> qvarid) <|> (VSym <$> qvarsym) <&> IEVar
 
-    thingAbsP = IEThingAbs <$> conid
+    thingAbsP = IEThingAbs <$> qconid
 
-    thingAllP = IEThingAll <$> conid <* parens (dot >> dot)
+    thingAllP = IEThingAll <$> qconid <* parens (dot >> dot)
 
-    thingWithP = IEThingWith <$> conid <*> cnameP
+    thingWithP = IEThingWith <$> qconid <*> cnameP
+
+    moduleContents = IEModuleContents <$> (keyword "module" *> qconid)
 
     cnameP =
       parens $
         choice
-          [ try $ CVarId <$> varid,
-            try $ CVarSym <$> varsym,
-            try $ CConId <$> conid,
-            try $ CConSym <$> consym
+          [ try $ CVarId <$> qvarid,
+            try $ CVarSym <$> qvarsym,
+            try $ CConId <$> qconid,
+            try $ CConSym <$> qconsym
           ]
           `sepBy` comma
 
@@ -74,11 +74,11 @@ importDeclP = do
   void $ keyword "import"
   ideclPkgQual <- optional stringLit
   (ideclIsQual, ideclName) <- ideclNameP
-  ideclAs <- optional (keyword "as" *> qconid)
+  ideclAs <- optional $ keyword "as" *> qconid
   ideclHiding <- ideclHidingP
   pure ImportDecl {..}
   where
-    ideclNameP :: Parser (Bool, Qual)
+    ideclNameP :: Parser (Bool, QConId)
     ideclNameP =
       choice
         [ try $ qual *> ((True,) <$> qconid),
@@ -100,4 +100,25 @@ importsP :: Parser ImportDecls
 importsP =
   ImportDecls <$> many importDeclP
 
--- exportsP :: arser
+modHeaderP :: Parser ModuleHeader
+modHeaderP = do
+  _modLangExts <- many $ try langExtP
+  _modGhcOpts <- many $ try ghcOptionP
+  _modName <- keyword "module" *> qconid
+  _modExports <- ieP <* keyword "where"
+  _modImports <- importsP
+  pure $ ModuleHeader {..}
+
+parseSourceP :: Parser ParsedSource
+parseSourceP = do
+  _srcModHeader <- leadingCommentedThingP modHeaderP
+  _srcRest <- T.pack <$> (manyTill anySingle eof)
+  pure $ ParsedSource {..}
+
+leadingCommentedThingP :: Parser a -> Parser (LeadingCommentedThing a)
+leadingCommentedThingP p =
+  LeadingCommentedThing <$> leadingCommentsP <*> p
+
+leadingCommentsP :: Parser [Comment]
+leadingCommentsP = do
+  emptySc *> (many $ (try singleLineCommentP <|> try blockCommentP))

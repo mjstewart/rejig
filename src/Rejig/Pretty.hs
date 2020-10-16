@@ -42,8 +42,8 @@ hidingText :: Doc
 hidingText =
   text "hiding"
 
-layoutVerticalImports :: Settings -> [IE] -> Doc
-layoutVerticalImports settings = \case
+layoutVerticalIEs :: Settings -> [IE] -> Doc
+layoutVerticalIEs settings = \case
   [] -> parens empty
   [x] -> parens $ runReader (showPretty x) settings
   (x : xs) ->
@@ -76,15 +76,84 @@ prettyHiding settings x =
   case ideclHiding x of
     Nothing -> empty
     Just (_, ies) ->
-      layoutVerticalImports settings ies
+      layoutVerticalIEs settings ies
 
 prettyAs :: Settings -> ImportDecl -> Doc
 prettyAs settings =
   maybe empty ((asText <+>) . runReader' settings . showPretty) . ideclAs
 
-instance Pretty PartitionedImports where
+instance Pretty Comment where
+  showPretty = \case
+    SingleLineComment x -> pure $ text "--" <+> (ttext $ T.strip x)
+    BlockComment x ->
+      pure $ vcat [
+        text "{-"
+      , ttext $ T.strip x
+      , text "-}"
+      ]
+
+-- vcatGroup :: [a] -> Doc
+-- vcatGroup xs =
+  -- if null xs  else [vcat xs, newline]
+
+instance Pretty ParsedSource where
   showPretty x = do
     settings <- ask
+
+    pure $ vcat
+     [ runReader' settings . showPretty $ _srcModHeader x
+     , ttext $ _srcRest x
+     ]
+    -- _srcModHeader
+
+instance (Pretty a) => Pretty (LeadingCommentedThing a) where
+  showPretty x = do
+    settings <- ask
+
+    pure $
+      vcat [
+        vcat $ map (runReader' settings . showPretty) $ _leadingComments x
+      , runReader' settings . showPretty $ _leadingThing x
+      ]
+
+
+prettyVcat :: Pretty a => Settings -> [a] -> Doc
+prettyVcat s = vcat . map (runReader' s . showPretty)
+
+instance Pretty ModuleHeader where
+  showPretty x = do
+    settings <- ask
+
+    pure $ vcat [
+        prettyVcat settings $ _modLangExts x
+      , prettyVcat settings $ _modGhcOpts x
+        -- vcat $ map (runReader' settings . showPretty) $ _modLangExts x
+      -- , vcat $ map (runReader' settings . showPretty) $ _modGhcOpts x
+      , hang
+        ( hsep
+            [ text "module"
+            , runReader' settings . showPretty $ _modName x
+            ]
+        )
+        2
+        $ layoutVerticalIEs settings $ _modExports x
+      , text "where"
+      ]
+
+t2 :: Doc
+t2 =
+  hang (hsep [(text "me"), text "you"])
+   2
+   $ vcat [text "a", text "b", text "c"]
+    -- pure $ text "module header"
+
+x :: IO ()
+x =
+  writeFile "result.txt" $ render t2
+
+
+instance Pretty PartitionedImports where
+  showPretty x = do
 
     liftA3
       (\a b c -> vcat [a, b, c])
@@ -151,15 +220,21 @@ instance Pretty IE where
         [ runReader (showPretty x) settings,
           parens $ hsep $ punctuate comma $ map (runReader' settings . showPretty) xs
         ]
+  showPretty (IEModuleContents x) =
+    asks $ \settings ->
+      hsep
+        [ text "module"
+        , runReader (showPretty x) settings
+        ]
 
-instance Pretty Var where
+instance Pretty QVar where
   showPretty (VId x) =
     asks $ runReader (showPretty x)
   showPretty (VSym x) =
     asks $ runReader (showPretty x)
 
-instance Pretty Pragma where
-  showPretty (Pragma x) =
+instance Pretty LangExt where
+  showPretty (LangExt x) =
     pure $ text "{-# LANGUAGE" <+> ttext x <+> text "#-}"
 
 instance Pretty GhcOption where
@@ -167,12 +242,18 @@ instance Pretty GhcOption where
     pure $ text "{-# OPTIONS_GHC" <+> ttext x <+> text "#-}"
 
 instance Pretty Qual where
-  showPretty (Qual conids cname) = do
+  showPretty (Qual conids thing) = do
     settings <- ask
     pure $
-      hcat . intersperse dot $
-        map (runReader' settings . showPretty) conids
-          ++ [runReader (showPretty cname) settings]
+      hcat $
+        intersperse dot $
+          map (runReader' settings . showPretty) conids ++ [ttext thing]
+
+        -- map (runReader' settings . showPretty) conids
+          -- ++ [runReader (showPretty thing) settings]
+
+instance Pretty Text where
+  showPretty = pure . ttext
 
 instance Pretty CName where
   showPretty (CVarId x) =
@@ -184,18 +265,28 @@ instance Pretty CName where
   showPretty (CConSym x) =
     asks $ runReader (showPretty x)
 
-instance Pretty VarId where
-  showPretty =
-    pure . ttext . unVarId
+instance Pretty QVarId where
+  showPretty (QVarId x)=
+    asks $ runReader (showPretty x)
+    --runReader showPretty . unQVarId
+    -- pure . text . unQVarId
 
-instance Pretty VarSym where
-  showPretty =
-    pure . ttext . unVarSym
+instance Pretty QVarSym where
+  showPretty (QVarSym x) =
+    asks $ runReader (showPretty x)
+    -- pure . ttext . unQVarSym
+
+instance Pretty QConId where
+  showPretty (QConId x) =
+    asks $ runReader (showPretty x)
+  -- pure . ttext . unQConId
+
+instance Pretty QConSym where
+  showPretty (QConSym x) =
+    asks $ runReader (showPretty x)
+
+    -- pure . ttext . unQConSym
 
 instance Pretty ConId where
   showPretty =
     pure . ttext . unConId
-
-instance Pretty ConSym where
-  showPretty =
-    pure . ttext . unConSym

@@ -14,6 +14,11 @@ import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
 import Text.PrettyPrint (render)
 
+sortParsedSource :: ParsedSource -> ParsedSource
+sortParsedSource src = src
+  -- src { _p }
+
+
 sortImports :: ImportDecls -> Reader Settings PartitionedImports
 sortImports (ImportDecls decls) = do
   settings <- ask
@@ -149,17 +154,17 @@ instance Weight ImportDecl where
           $ ideclHiding decl
 
 -- really should be TopLevelGroupWeight?
-instance Weight Var where
+instance Weight QVar where
   weight = \case
-    VId (VarId _) -> 100
-    VSym (VarSym x) -> 200
+    VId (QVarId _) -> 100
+    VSym (QVarSym x) -> 200
 
 instance Weight CName where
   weight = \case
     CVarId _ -> 100
-    CVarSym (VarSym x) -> 200
+    CVarSym (QVarSym x) -> 200
     CConId _ -> 300
-    CConSym (ConSym x) -> 400
+    CConSym (QConSym x) -> 400
 
 instance Weight IE where
   weight = \case
@@ -167,3 +172,4 @@ instance Weight IE where
     IEThingAbs _ -> 300
     IEThingAll _ -> 400
     IEThingWith _ _ -> 500
+    IEModuleContents _ -> 600

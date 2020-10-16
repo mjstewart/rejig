@@ -32,7 +32,8 @@ common deps
   default-language:    Haskell2010
   ghc-options:
     -Wall
-    -fno-warn-name-shadowing -Wcompat
+    -fno-warn-name-shadowing
+    -Wcompat
     -Wincomplete-uni-patterns
   default-extensions:
     OverloadedStrings

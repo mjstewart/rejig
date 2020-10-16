@@ -117,6 +117,18 @@ sc :: Parser ()
 sc =
   L.space (void $ takeWhile1P Nothing (== ' ')) lineComment blockComment
 
+-- | empty space consumer
+emptySc :: Parser ()
+emptySc =
+  L.space space1 empty empty
+
+--
+esymbol :: Text -> Parser Text
+esymbol = L.symbol emptySc
+
+elexeme :: Parser a -> Parser a
+elexeme = L.lexeme emptySc
+
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme scn
 
@@ -133,6 +145,23 @@ dot =
 
 parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
+
+pragma :: Parser a -> Parser a
+pragma = between (esymbol "{-#") (esymbol "#-}")
+
+takeTillNewLine :: Parser Text
+takeTillNewLine =
+  takeWhileP Nothing (/= '\n')
+
+singleLineCommentP :: Parser Comment
+singleLineCommentP =
+  SingleLineComment <$> (elexeme $ esymbol "--" *> takeTillNewLine)
+
+blockCommentP :: Parser Comment
+blockCommentP =
+  BlockComment . T.pack <$> (elexeme $ (block "{-" *> manyTill anySingle (string "-}")))
+  where
+    block x = symbol x <* notFollowedBy "#"
 
 keyword :: Text -> Parser ()
 keyword kw =
@@ -180,9 +209,9 @@ sym =
 
 
 -- | (small {small | large | digit | ' })<reservedid>
-varid :: Parser VarId
+varid :: Parser Text
 varid =
-  VarId <$> postValidate check parser
+  postValidate check parser
   where
     parser = lexeme $ T.cons <$> small <*> takeWhileP Nothing body
 
@@ -194,18 +223,18 @@ varid =
       else Right result
 
 -- | large {small | large | digit | ' }
-conid :: Parser ConId
+conid :: Parser Text
 conid =
-  ConId <$> (lexeme $ T.cons <$> large <*> takeWhileP Nothing body)
+  lexeme $ T.cons <$> large <*> takeWhileP Nothing body
   where
     body = applyOr [Char.isLower, Char.isUpper, Char.isDigit, (== '\'')]
 
 
 -- | ( symbol {symbol | :})<reservedop | dashes>
 -- dashes ignored since lexeme/symbol space consumer ignores them
-varsym :: Parser VarSym
+varsym :: Parser Text
 varsym =
-  VarSym <$> postValidate check parser
+  postValidate check parser
   where
     parser = lexeme $ wrap <$> (parens $ lexeme (T.cons <$> sym <*> body))
     body = T.pack <$> many (try sym) <|> show <$> char ':'
@@ -216,9 +245,9 @@ varsym =
       else Right result
 
 -- | (: {symbol | :})<reservedop>
-consym :: Parser ConSym
+consym :: Parser Text
 consym =
-  ConSym <$> postValidate check parser
+  postValidate check parser
   where
     parser = lexeme $ wrap <$> (parens $ lexeme (T.cons <$> char ':' <*> body))
     body = T.pack <$> (many $ try sym <|> char ':')
@@ -228,22 +257,22 @@ consym =
       then Left $ show result <> " is a reserved operator"
       else Right result
 
-tyvar :: Parser VarId
+tyvar :: Parser Text
 tyvar = varid
 
-tycon :: Parser ConId
+tycon :: Parser Text
 tycon = conid
 
-tycls :: Parser ConId
+tycls :: Parser Text
 tycls = conid
 
 modid :: Parser ConId
-modid = conid
+modid = ConId <$> conid
 
 -- | This parser is abit involved due to the last element being a different lexeme type.
 -- The lookAhead is a preprocessing step, similar to doing a string split to identify the last
 -- element to run a different parser over
-modids :: Parser CName -> Parser Qual
+modids :: Parser Text -> Parser Qual
 modids endP = do
   segmentCount <- (dec . length) <$> (lookAhead $ word `sepBy` dot)
   Qual <$> (count segmentCount $ modid <* dot) <*> endP
@@ -255,31 +284,31 @@ modids endP = do
       T.pack <$> many letterChar
 
 -- | [ modid . ] varid
-qvarid :: Parser Qual
+qvarid :: Parser QVarId
 qvarid =
-  lexeme $ modids (CVarId <$> varid)
+  QVarId <$> (lexeme $ modids varid)
 
 -- | [ modid . ] conid
-qconid :: Parser Qual
+qconid :: Parser QConId
 qconid =
-  lexeme $ modids (CConId <$> conid)
+  QConId <$> (lexeme $ modids conid)
 
 -- | [ modid . ] tycon
-qtycon :: Parser Qual
+qtycon :: Parser QConId
 qtycon =
-  lexeme $ modids (CConId <$> tycon)
+  QConId <$> (lexeme $ modids tycon)
 
 -- | [ modid . ] tycls
-qtycls :: Parser Qual
+qtycls :: Parser QConId
 qtycls =
-  lexeme $ modids (CConId <$> tycls)
+  QConId <$> (lexeme $ modids tycls)
 
 -- | [ modid . ] varsym
-qvarsym :: Parser Qual
+qvarsym :: Parser QVarSym
 qvarsym =
-  lexeme $ modids (CVarSym <$> varsym)
+  QVarSym <$> (lexeme $ modids varsym)
 
 -- | [ modid . ] consym
-qconsym :: Parser Qual
+qconsym :: Parser QConSym
 qconsym =
-  lexeme $ modids (CConSym <$> consym)
+  QConSym <$> (lexeme $ modids consym)

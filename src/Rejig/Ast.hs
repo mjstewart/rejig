@@ -4,8 +4,24 @@
 
 module Rejig.Ast where
 
+import qualified Text.Show
+import qualified Data.Text as T
+
+data Comment
+  = SingleLineComment Text
+  -- ^ -- a single line
+  | BlockComment Text
+  -- ^ {- a block comment -}
+    deriving (Show, Eq)
+
+-- ^ Represents source code with a leading comment then something else.
+data LeadingCommentedThing a = LeadingCommentedThing
+ { _leadingComments :: [Comment]
+ , _leadingThing :: a
+ } deriving (Show, Eq)
+
 -- {-# LANGUAGE <Extension> #-}
-newtype Pragma = Pragma {unPragma :: Text}
+newtype LangExt = LangExt {unLangExt :: Text}
   deriving (Show, Eq)
 
 -- {-# OPTIONS_GHC -Wno-all-case #-}
@@ -15,20 +31,17 @@ newtype GhcOption = GhcOption {unGhcOption :: Text}
 -- | Inspired by https://hackage.haskell.org/package/ghc-lib-parser-8.10.1.20200324/docs/GHC-Hs-ImpExp.html#t:ImportDecl
 data ImportDecl = ImportDecl
   { -- | A ModuleName is essentially a string e.g. Data.List
-    ideclName :: Qual,
+    ideclName :: QConId,
     -- | Package qualifier
     ideclPkgQual :: Maybe Text,
     -- | Does the qualified keyword appear
     ideclIsQual :: Bool,
     -- | as Module
-    ideclAs :: Maybe Qual,
+    ideclAs :: Maybe QConId,
     -- | (True => hiding, names)
     ideclHiding :: Maybe (Bool, [IE])
   }
   deriving (Show, Eq)
-
-data ExportDecl = ExportDecl
-  {}
 
 data PartitionedImports = PartitionedImports
   { _piRest :: CG ImportDeclGroups,
@@ -49,11 +62,20 @@ newtype ImportDecls = ImportDecls {unImportDecls :: [ImportDecl]}
 newtype ImportDeclGroups = ImportDeclGroups {unImportDeclGroups :: [ImportDecls]}
   deriving newtype (Show, Eq)
 
-newtype VarId = VarId {unVarId :: Text}
+newtype QVarId = QVarId { unQVarId :: Qual }
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
-newtype VarSym = VarSym {unVarSym :: Text}
+-- newtype VarId = VarId {unVarId :: Text}
+  -- deriving stock (Show)
+  -- deriving newtype (Eq, Ord)
+
+
+-- newtype VarSym = VarSym {unVarSym :: Text}
+  -- deriving stock (Show)
+  -- deriving newtype (Eq, Ord)
+
+newtype QVarSym = QVarSym {unQVarSym :: Qual }
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
@@ -61,18 +83,34 @@ newtype ConId = ConId {unConId :: Text}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
-newtype ConSym = ConSym {unConSym :: Text}
+newtype QConId = QConId {unQConId :: Qual}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
-data Qual = Qual [ConId] CName
-  deriving (Show, Eq)
+-- newtype ConSym = ConSym {unConSym :: Text}
+  -- deriving stock (Show)
+  -- deriving newtype (Eq, Ord)
+
+newtype QConSym = QConSym {unQConSym :: Qual}
+  deriving stock (Show)
+  deriving newtype (Eq, Ord)
+
+
+data Qual = Qual [ConId] Text
+  deriving (Eq)
+
+instance Show Qual where
+  show (Qual modids x) =
+    T.unpack . T.concat . intersperse "." $ (map unConId modids) ++ [x]
+
+instance Ord Qual where
+  compare a b = compare (show a) (show b)
 
 data CName
-  = CVarId VarId
-  | CVarSym VarSym
-  | CConId ConId
-  | CConSym ConSym
+  = CVarId QVarId
+  | CVarSym QVarSym
+  | CConId QConId
+  | CConSym QConSym
   deriving (Show, Eq)
 
 cnameIndex :: CName -> Int
@@ -82,12 +120,12 @@ cnameIndex = \case
   CConId _ -> 2
   CConSym _ -> 3
 
-data Var
-  = VId VarId
-  | VSym VarSym
+data QVar
+  = VId QVarId
+  | VSym QVarSym
   deriving (Show, Eq)
 
-varIndex :: Var -> Int
+varIndex :: QVar -> Int
 varIndex = \case
   VId _ -> 0
   VSym _ -> 1
@@ -96,7 +134,7 @@ varIndex = \case
 -- The {type}Index function exists to use the overall ordering to avoid having to
 -- declare every permutation.
 
-instance Ord Var where
+instance Ord QVar where
   compare (VId a) (VId b) = compare a b
   compare (VSym a) (VSym b) = compare a b
   compare a b = compare (varIndex a) (varIndex b)
@@ -110,14 +148,17 @@ instance Ord CName where
 
 data IE
   = -- | Imported or Exported Variable
-    IEVar Var
+    IEVar QVar
   | -- | Imported or exported Thing with Absent list, eg: Month ()
-    IEThingAbs ConId
+    IEThingAbs QConId
   | -- | ClassType plus all methods/constructors, eg: Month(..)
-    IEThingAll ConId
+    IEThingAll QConId
   | -- | ClassType plus some methods/constructors eg: Month(Jan, Feb)
-    IEThingWith ConId [CName]
+    IEThingWith QConId [CName]
+  | IEModuleContents QConId
+    -- ^ module xyz
   deriving (Show, Eq)
+
 
 ieIndex :: IE -> Int
 ieIndex = \case
@@ -125,6 +166,7 @@ ieIndex = \case
   IEThingAbs _ -> 1
   IEThingAll _ -> 2
   IEThingWith _ _ -> 3
+  IEModuleContents _ -> 4
 
 instance Ord IE where
   compare (IEVar a) (IEVar b) = compare a b
@@ -132,6 +174,8 @@ instance Ord IE where
   compare (IEThingAll a) (IEThingAll b) = compare a b
   compare (IEThingWith conidA namesA) (IEThingWith conidB namesB) =
     compare conidA conidB <> compare namesA namesB
+  compare (IEModuleContents a) (IEModuleContents b) =
+    compare a b
 
 -- data EThing
   -- = EThingVar QVar
@@ -143,13 +187,18 @@ instance Ord IE where
   -- deriving (Show, Eq)
 
 data ModuleHeader = ModuleHeader
-  { _modLangExts :: [Text]
-  , _modGhcOpts :: [Text]
-  , _modName :: Text
-  , _modExports :: [ImportDecl]
-  , _modImports :: [ImportDecl]
-  , _modBody :: Text
+  { _modLangExts :: [LangExt]
+  , _modGhcOpts :: [GhcOption]
+  , _modName :: QConId
+  , _modExports :: [IE]
+  , _modImports :: ImportDecls
   }
+  deriving (Show, Eq)
+
+data ParsedSource = ParsedSource
+ { _srcModHeader :: LeadingCommentedThing ModuleHeader
+ , _srcRest :: Text
+ }
   deriving (Show, Eq)
 
 -- data Program

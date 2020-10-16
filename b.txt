@@ -1,3 +1,44 @@
-import Data.List3 as Li.Matt
 
+-- comment
+
+{-| block comment -}
+
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleContexts #-}
+
+
+
+{-# OPTIONS_GHC -Wno-all-case #-}
+{-# OPTIONS_GHC -Wall #-}
+
+module Rejig.ImportSort
+  ( toSortedGroups
+  , Q.Z.map
+  , module Cat.Dog.Y
+  )
+where
+
+
+import Data.Applicative.Hello
+import DA.Time
+import DA.Traversable
+import DA.Alphabet.Soup
+
+import "ccc" DA.Cat
+import Data.List qualified
+
+import Rejig.Main.App
+import Data.List3 as Li.Matt
 import Data.Apple.Cat as Cat.Dog.Me
+import qualified Data.Apple.Cat1 as Cat.Dog.Me1
+import Data.Apple.Cat2 qualified as Cat.Dog.Me2
+
+
+import Data.Applicative.Hello qualified
+import DA.Time qualified
+import qualified Rejig.Main.Domain as D.Serv
+
+
+f :: Int -> Int
+f x = x

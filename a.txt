@@ -47,7 +47,7 @@ import qualified Rejig.Main.Domain as D.Serv
 
 import "ccc" DA.Apple qualified as B
 import DA.Traversable qualified
-import Data.Queue qualified as Q ((<<<=), many, take, cat, egg, atlas, Time(..), (!<), Day(Sun, Mon, Wed, Fri, Sat, Thur, Tue), Week)
+import Data.Queue qualified as Q ((<<<=), X.Y.Z.M.many, take, cat, egg, atlas, Time(..), (!<), Day(Sun, Mon, Wed, Fri, Sat, Thur, Tue), Week)
 import "ccc" DA.Adelaide
 import DA.Prelude ()
 import Data.List as L
