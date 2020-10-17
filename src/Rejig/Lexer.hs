@@ -122,6 +122,11 @@ emptySc :: Parser ()
 emptySc =
   L.space space1 empty empty
 
+sce :: Parser ()
+sce =
+  L.space (void $ takeWhile1P Nothing (== ' ')) empty empty
+
+
 --
 esymbol :: Text -> Parser Text
 esymbol = L.symbol emptySc
@@ -153,13 +158,13 @@ takeTillNewLine :: Parser Text
 takeTillNewLine =
   takeWhileP Nothing (/= '\n')
 
-singleLineCommentP :: Parser Comment
+singleLineCommentP :: Parser Text
 singleLineCommentP =
-  SingleLineComment <$> (elexeme $ esymbol "--" *> takeTillNewLine)
+  (esymbol "--" *> takeTillNewLine) <* newline <* sce
 
 blockCommentP :: Parser Comment
 blockCommentP =
-  BlockComment . T.pack <$> (elexeme $ (block "{-" *> manyTill anySingle (string "-}")))
+  BlockComment . T.pack <$> ((block "{-" *> manyTill anySingle (string "-}")) <* sce)
   where
     block x = symbol x <* notFollowedBy "#"
 

@@ -41,6 +41,7 @@ parseFile path = do
   case result of
     Left e -> pure ()
     Right txt -> do
+      -- case runParser singleLineCommentsP "test" txt of
       -- case runParser leadingCommentsP "test" txt of
       case runParser parseSourceP "test" txt of
         Left bundle -> writeFile "result.txt" (errorBundlePretty bundle)
@@ -48,7 +49,7 @@ parseFile path = do
           writeFile "result.txt" $
             -- render $ runReader (showPretty $ runReader (sortImports res) settings) settings
             render $ runReader (showPretty res) settings
-            --render $ show res
+            -- render $ show res
 
       pure ()
 

@@ -1,11 +1,29 @@
 
--- comment
+-- c1
+-- c2
+--     c3
+--  | c45
 
-{-| block comment -}
+{-|      block comment
 
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE FlexibleContexts #-}
+
+
+  hello
+
+    -}
+
+{- me -}
+
+{-| me4
+
+
+-}
+
+--|TODO
+--  .. TOMe
+
+
+
 
 
 

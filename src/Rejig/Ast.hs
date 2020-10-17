@@ -12,6 +12,8 @@ data Comment
   -- ^ -- a single line
   | BlockComment Text
   -- ^ {- a block comment -}
+
+  | CommentNewLine
     deriving (Show, Eq)
 
 -- ^ Represents source code with a leading comment then something else.

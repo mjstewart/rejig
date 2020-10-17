@@ -3,6 +3,7 @@ module Rejig.Pretty where
 import Control.Monad.Reader
 import qualified Data.Set as Set
 import qualified Data.Text as T
+import qualified Data.List as L
 import Rejig.Ast
 import Rejig.Lang
 import Rejig.Settings
@@ -84,35 +85,61 @@ prettyAs settings =
 
 instance Pretty Comment where
   showPretty = \case
+    -- SingleLineComments xs -> pure $ vcat $ map (\x -> text "--" <+> (ttext $ T.strip x)) xs
     SingleLineComment x -> pure $ text "--" <+> (ttext $ T.strip x)
+    CommentNewLine -> pure empty
     BlockComment x ->
       pure $ vcat [
-        text "{-"
-      , ttext $ T.strip x
-      , text "-}"
+        if T.isPrefixOf "|" (T.strip x) then
+          hcat [text "{-", ttext $ T.strip x]
+        else
+          text "{-" <+> (ttext $ T.strip x)
+      ,
+       text "-}"
       ]
 
 -- vcatGroup :: [a] -> Doc
 -- vcatGroup xs =
   -- if null xs  else [vcat xs, newline]
 
+vcatSep:: [Doc] -> Doc
+vcatSep =
+  vcat . intersperse newline . filter (not . isEmpty)
+
+
 instance Pretty ParsedSource where
   showPretty x = do
     settings <- ask
 
-    pure $ vcat
+    pure $ vcatSep
      [ runReader' settings . showPretty $ _srcModHeader x
      , ttext $ _srcRest x
      ]
     -- _srcModHeader
+
+
+-- | Groups exists to make formatting easier since each type of comment
+-- style is separated by a newline whilst multiline comments are preserved.
+toCommentGroups :: Settings -> [Comment] -> Doc
+toCommentGroups settings =
+  vcatSep
+    . map (vcat . map (runReader' settings . showPretty))
+    . L.groupBy f
+  where
+    f (SingleLineComment _) (SingleLineComment _) = True
+    f (BlockComment _) (BlockComment _) = True
+    f _ _ = False
 
 instance (Pretty a) => Pretty (LeadingCommentedThing a) where
   showPretty x = do
     settings <- ask
 
     pure $
-      vcat [
-        vcat $ map (runReader' settings . showPretty) $ _leadingComments x
+      vcatSep [
+        -- ttext $ show $ _leadingComments x
+      -- , ttext $ show $ g $ _leadingComments x
+      -- vcat $ map (runReader' settings . showPretty) $ pt3 settings (g (_leadingComments x))
+       toCommentGroups settings $ _leadingComments x
       , runReader' settings . showPretty $ _leadingThing x
       ]
 
@@ -120,16 +147,19 @@ instance (Pretty a) => Pretty (LeadingCommentedThing a) where
 prettyVcat :: Pretty a => Settings -> [a] -> Doc
 prettyVcat s = vcat . map (runReader' s . showPretty)
 
+
 instance Pretty ModuleHeader where
   showPretty x = do
     settings <- ask
 
-    pure $ vcat [
+    pure $ vcatSep [
         prettyVcat settings $ _modLangExts x
       , prettyVcat settings $ _modGhcOpts x
         -- vcat $ map (runReader' settings . showPretty) $ _modLangExts x
       -- , vcat $ map (runReader' settings . showPretty) $ _modGhcOpts x
-      , hang
+      ,
+      vcat
+       [ hang
         ( hsep
             [ text "module"
             , runReader' settings . showPretty $ _modName x
@@ -137,7 +167,9 @@ instance Pretty ModuleHeader where
         )
         2
         $ layoutVerticalIEs settings $ _modExports x
-      , text "where"
+       , text "where"
+       ]
+      , runReader' settings . showPretty $ _modImports x
       ]
 
 t2 :: Doc
@@ -183,7 +215,8 @@ prettyCG cg = do
 instance Pretty ImportDeclGroups where
   showPretty x = do
     settings <- ask
-    pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
+    pure . vcatSep . map (runReader' settings . showPretty) $ unImportDeclGroups x
+
 
 instance Pretty ImportDecls where
   showPretty x = do

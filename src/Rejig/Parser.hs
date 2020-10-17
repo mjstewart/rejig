@@ -116,9 +116,61 @@ parseSourceP = do
   pure $ ParsedSource {..}
 
 leadingCommentedThingP :: Parser a -> Parser (LeadingCommentedThing a)
-leadingCommentedThingP p =
-  LeadingCommentedThing <$> leadingCommentsP <*> p
+leadingCommentedThingP p = do
+  LeadingCommentedThing <$> leadingCommentsP p <*> p
 
-leadingCommentsP :: Parser [Comment]
-leadingCommentsP = do
-  emptySc *> (many $ (try singleLineCommentP <|> try blockCommentP))
+{-
+   {- block -} | [-- sl] | module start
+-}
+leadingCommentsP :: Parser a -> Parser [Comment]
+leadingCommentsP p =
+  emptySc *> (many $
+    choice [
+      try $ SingleLineComment <$> singleLineCommentP
+    , try $ CommentNewLine <$ (elexeme newline)
+    , try $ blockCommentP
+    ])
+
+-- manySingleLines :: Parser a -> Parser (LeadingCommentedThing a)
+-- manySingleLines p = do
+  -- (a, b) <- (manyTill_ singleLineCommentP (leadingCommentsP p))
+  -- let
+    -- comments = SingleLineComments a
+
+    -- restComments = _leadingComments b
+    -- thing = _leadingThing b
+
+  -- pure $ LeadingCommentedThing (comments : restComments) thing
+  -- pure $ LeadingCommentedThing [(SingleLineComments a)] b
+
+
+  -- many (try (elexeme singleLineCommentsP) <|> blockCommentP)
+  -- many singleLineCommentsP
+  -- emptySc *> (many $ (try singleLineCommentP <|> try blockCommentP))
+
+-- m2 :: Parser Comment
+-- m2 =
+  -- SingleLineComments <$>
+    -- (try (many (singleLineCommentP <* lookAhead singleLineCommentP)))
+
+-- singleLineCommentP :: Parser Comment
+-- singleLineCommentP =
+  -- many
+
+
+-- singleLineCommentsP :: Parser Comment
+-- singleLineCommentsP =
+  -- SingleLineComments <$> (manyTill (dbg "scp" singleLineCommentP) (dbg "lahead" $ lookAhead leadingCommentsP))
+
+  -- many (try blockCommentP)
+  -- SingleLineComments <$> (many singleLineCommentP)
+
+
+  -- (x, y) <- manyTill_ (elexeme singleLineCommentP) (many langExtP)
+  -- pure $ LeadingCommentedThing [SingleLineComments x] y
+  -- SingleLineComments <$> (manyTill singleLineCommentP end)
+
+-- singleLineComments2P :: Parser (LeadingCommentedThing [LangExt])
+-- singleLineComments2P = do
+  -- (x, y) <- manyTill_ (elexeme singleLineCommentP) ()
+  -- pure $ LeadingCommentedThing [SingleLineComments x] y

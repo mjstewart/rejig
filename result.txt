@@ -1,17 +1,48 @@
--- comment
-{-
-| block comment
+-- c1
+-- c2
+-- c3
+-- | c45
+
+{-|      block comment
+
+
+
+  hello
 -}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE FlexibleContexts #-}
+
+{- me
+-}
+
+{-| me4
+-}
+
+-- |TODO
+-- .. TOMe
+
 {-# OPTIONS_GHC -Wno-all-case #-}
 {-# OPTIONS_GHC -Wall #-}
+
 module Rejig.ImportSort
   ( toSortedGroups
   , Q.Z.map
   , module Cat.Dog.Y
   )
 where
+
+import Data.Applicative.Hello
+import DA.Time
+import DA.Traversable
+import DA.Alphabet.Soup
+import "ccc" DA.Cat
+import qualified Data.List
+import Rejig.Main.App
+import Data.List3 as Li.Matt
+import Data.Apple.Cat as Cat.Dog.Me
+import qualified Data.Apple.Cat1 as Cat.Dog.Me1
+import qualified Data.Apple.Cat2 as Cat.Dog.Me2
+import qualified Data.Applicative.Hello
+import qualified DA.Time
+import qualified Rejig.Main.Domain as D.Serv
+
 f :: Int -> Int
 f x = x
