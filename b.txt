@@ -25,6 +25,16 @@
 
 
 
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+{-# LANGUAGE DeriveFunctor #-}
+
+
+{-# LANGUAGE DerivingStrategies #-}
+
+
 
 
 {-# OPTIONS_GHC -Wno-all-case #-}
@@ -33,7 +43,14 @@
 module Rejig.ImportSort
   ( toSortedGroups
   , Q.Z.map
+  , tiger
   , module Cat.Dog.Y
+  , cat
+  , module Cat
+  , apple
+  , module Cat.Apple.Banana
+  , A.T.cat
+  , A.B.fold
   )
 where
 

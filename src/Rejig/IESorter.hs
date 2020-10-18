@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
-module Rejig.IESorter (sortImports) where
+module Rejig.IESorter (sortParsedSource) where
 
 import Data.Bifunctor (first)
 import qualified Data.List as L
@@ -14,9 +14,26 @@ import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
 import Text.PrettyPrint (render)
 
-sortParsedSource :: ParsedSource -> ParsedSource
-sortParsedSource src = src
-  -- src { _p }
+sortParsedSource :: ParsedSource -> Reader Settings SortedParsedSource
+sortParsedSource ps = do
+  _ssrcModHeader <- sortModHeader $ _leadingThing $ _srcModHeader ps
+
+  pure $ SortedParsedSource
+   { _ssrcModHeader = const _ssrcModHeader <$> (_srcModHeader ps)
+   , _ssrcRest = _srcRest ps
+   }
+
+sortModHeader :: ModuleHeader -> Reader Settings SortedModuleHeader
+sortModHeader mh = do
+  sortedImports <- sortImports $ _modImports mh
+
+  pure $ SortedModuleHeader
+    { _smodLangExts = sort $ _modLangExts mh
+    , _smodGhcOpts = sort $ _modGhcOpts mh
+    , _smodName = _modName mh
+    , _smodExports = sort $ _modExports mh
+    , _smodImports = sortedImports
+    }
 
 
 sortImports :: ImportDecls -> Reader Settings PartitionedImports

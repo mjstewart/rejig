@@ -3,7 +3,7 @@ module Main where
 import qualified Control.Exception as Ex
 import Data.Text as T
 import qualified Data.Text as T
-import Rejig.IESorter (sortImports)
+import Rejig.IESorter
 import Rejig.Parser
 import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
@@ -20,6 +20,8 @@ mkDefaultSettings =
       { _sQualifiedStyle = QualifiedPre,
         _sGroupByPrefix = ["DA.", "Rejig"],
         _sShowGroupComments = True
+      , _sImportBorderTop = True
+      , _sImportBorderBottom = True
       }
 
 -- runPrettyRender :: Pretty a => Settings -> a -> String
@@ -48,7 +50,8 @@ parseFile path = do
         Right res ->
           writeFile "result.txt" $
             -- render $ runReader (showPretty $ runReader (sortImports res) settings) settings
-            render $ runReader (showPretty res) settings
+            render $
+              runReader (showPretty $ runReader (sortParsedSource res) settings) settings
             -- render $ show res
 
       pure ()

@@ -43,6 +43,12 @@ hidingText :: Doc
 hidingText =
   text "hiding"
 
+borderLine :: Doc
+borderLine =
+  ttext $ T.replicate lineLength "-"
+  where
+    lineLength = 80
+
 layoutVerticalIEs :: Settings -> [IE] -> Doc
 layoutVerticalIEs settings = \case
   [] -> parens empty
@@ -117,6 +123,16 @@ instance Pretty ParsedSource where
      ]
     -- _srcModHeader
 
+instance Pretty SortedParsedSource where
+  showPretty x = do
+    settings <- ask
+
+    pure $ vcatSep
+     [ runReader' settings . showPretty $ _ssrcModHeader x
+     , if _sImportBorderBottom settings then borderLine else empty
+     , ttext $ _ssrcRest x
+     ]
+
 
 -- | Groups exists to make formatting easier since each type of comment
 -- style is separated by a newline whilst multiline comments are preserved.
@@ -172,17 +188,27 @@ instance Pretty ModuleHeader where
       , runReader' settings . showPretty $ _modImports x
       ]
 
-t2 :: Doc
-t2 =
-  hang (hsep [(text "me"), text "you"])
-   2
-   $ vcat [text "a", text "b", text "c"]
-    -- pure $ text "module header"
+instance Pretty SortedModuleHeader where
+  showPretty x = do
+    settings <- ask
 
-x :: IO ()
-x =
-  writeFile "result.txt" $ render t2
-
+    pure $ vcatSep [
+        prettyVcat settings $ _smodLangExts x
+      , prettyVcat settings $ _smodGhcOpts x
+      , vcat
+          [ hang
+            ( hsep
+                [ text "module"
+                , runReader' settings . showPretty $ _smodName x
+                ]
+            )
+            2
+            $ layoutVerticalIEs settings $ _smodExports x
+          , text "where"
+          , if _sImportBorderTop settings then newline $$ borderLine else empty
+          , runReader' settings . showPretty $ _smodImports x
+          ]
+      ]
 
 instance Pretty PartitionedImports where
   showPretty x = do
@@ -201,7 +227,10 @@ instance Pretty PartitionedImports where
 prettyCG :: Pretty a => CG a -> Reader Settings Doc
 prettyCG cg = do
   settings <- ask
-  pure $
+  let content = runReader' settings $ showPretty $ _cgGroup cg
+
+  pure $ if isEmpty content then empty
+  else
     vcat
       [ comment settings,
         runReader' settings $ showPretty $ _cgGroup cg

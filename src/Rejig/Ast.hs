@@ -20,15 +20,17 @@ data Comment
 data LeadingCommentedThing a = LeadingCommentedThing
  { _leadingComments :: [Comment]
  , _leadingThing :: a
- } deriving (Show, Eq)
+ } deriving (Show, Eq, Functor)
 
 -- {-# LANGUAGE <Extension> #-}
 newtype LangExt = LangExt {unLangExt :: Text}
-  deriving (Show, Eq)
+  deriving stock (Show)
+  deriving newtype (Eq, Ord)
 
 -- {-# OPTIONS_GHC -Wno-all-case #-}
 newtype GhcOption = GhcOption {unGhcOption :: Text}
-  deriving (Show, Eq)
+  deriving stock (Show)
+  deriving newtype (Eq, Ord)
 
 -- | Inspired by https://hackage.haskell.org/package/ghc-lib-parser-8.10.1.20200324/docs/GHC-Hs-ImpExp.html#t:ImportDecl
 data ImportDecl = ImportDecl
@@ -178,6 +180,7 @@ instance Ord IE where
     compare conidA conidB <> compare namesA namesB
   compare (IEModuleContents a) (IEModuleContents b) =
     compare a b
+  compare a b = compare (ieIndex a) (ieIndex b)
 
 -- data EThing
   -- = EThingVar QVar
@@ -197,9 +200,24 @@ data ModuleHeader = ModuleHeader
   }
   deriving (Show, Eq)
 
+data SortedModuleHeader = SortedModuleHeader
+  { _smodLangExts :: [LangExt]
+  , _smodGhcOpts :: [GhcOption]
+  , _smodName :: QConId
+  , _smodExports :: [IE]
+  , _smodImports :: PartitionedImports
+  }
+  deriving (Show, Eq)
+
 data ParsedSource = ParsedSource
  { _srcModHeader :: LeadingCommentedThing ModuleHeader
  , _srcRest :: Text
+ }
+  deriving (Show, Eq)
+
+data SortedParsedSource = SortedParsedSource
+ { _ssrcModHeader :: LeadingCommentedThing SortedModuleHeader
+ , _ssrcRest :: Text
  }
   deriving (Show, Eq)
 

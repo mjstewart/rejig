@@ -18,5 +18,7 @@ data Settings = Settings
  { _sQualifiedStyle :: ImportDeclQualifiedStyleSource
  , _sGroupByPrefix :: [Text]
  , _sShowGroupComments :: Bool
+ , _sImportBorderTop :: Bool
+ , _sImportBorderBottom :: Bool
  }
   deriving (Show, Eq)

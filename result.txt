@@ -19,30 +19,60 @@
 -- |TODO
 -- .. TOMe
 
-{-# OPTIONS_GHC -Wno-all-case #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TupleSections #-}
+
 {-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wno-all-case #-}
 
 module Rejig.ImportSort
-  ( toSortedGroups
+  ( A.B.fold
+  , A.T.cat
   , Q.Z.map
+  , apple
+  , cat
+  , tiger
+  , toSortedGroups
+  , module Cat.Apple.Banana
   , module Cat.Dog.Y
   )
 where
 
+--------------------------------------------------------------------------------
+
+-- standard imports
+
 import Data.Applicative.Hello
-import DA.Time
-import DA.Traversable
-import DA.Alphabet.Soup
-import "ccc" DA.Cat
-import qualified Data.List
-import Rejig.Main.App
-import Data.List3 as Li.Matt
+
 import Data.Apple.Cat as Cat.Dog.Me
+import Data.List3 as Li.Matt
+
+import qualified Data.Applicative.Hello
+import qualified Data.List
+
 import qualified Data.Apple.Cat1 as Cat.Dog.Me1
 import qualified Data.Apple.Cat2 as Cat.Dog.Me2
-import qualified Data.Applicative.Hello
+
+-- imports by DA.*
+
+import DA.Alphabet.Soup
+import DA.Time
+import DA.Traversable
+
 import qualified DA.Time
+
+import "ccc" DA.Cat
+
+-- imports by Rejig*
+
+import Rejig.Main.App
+
 import qualified Rejig.Main.Domain as D.Serv
+
+--------------------------------------------------------------------------------
 
 f :: Int -> Int
 f x = x
