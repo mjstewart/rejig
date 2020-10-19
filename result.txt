@@ -29,13 +29,25 @@
 {-# OPTIONS_GHC -Wno-all-case #-}
 
 module Rejig.ImportSort
-  ( A.B.fold
-  , A.T.cat
-  , Q.Z.map
-  , apple
+  ( apple
   , cat
   , tiger
   , toSortedGroups
+  , A.B.C.egg
+  , A.B.C.manifold
+  , A.B.fold
+  , A.T.cat
+  , Q.Z.map
+  , Apple (..)
+  , Cattle (..)
+  , Kettle (..)
+  , Kite (..)
+  , Bag.Unite (C.Fish)
+  , Cal.Month (A.B.CDec, App.Abbs, App.Aug, Bal.Cal.Bag, Bal.Cal.Feb, Cal.Jan, Lang.Nov, Z.Aggr, Z.Apr)
+  , Month (Apr, Aug, Dec, Feb, Jan, Nov)
+  , Speed (app, date, mapple, (<***>), (<|||>), High, Med, Slow)
+  , module Cat
+  , module Cat.Apple.Accord
   , module Cat.Apple.Banana
   , module Cat.Dog.Y
   )

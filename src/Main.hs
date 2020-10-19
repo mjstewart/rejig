@@ -3,7 +3,7 @@ module Main where
 import qualified Control.Exception as Ex
 import Data.Text as T
 import qualified Data.Text as T
-import Rejig.IESorter
+import Rejig.Sorter
 import Rejig.Parser
 import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings

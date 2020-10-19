@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
-module Rejig.IESorter (sortParsedSource) where
+module Rejig.Sorter (sortParsedSource) where
 
 import Data.Bifunctor (first)
 import qualified Data.List as L
@@ -13,6 +13,20 @@ import Rejig.Lang (runReader')
 import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
 import Text.PrettyPrint (render)
+
+comparingBy :: [a -> a -> Ordering] -> a -> a -> Ordering
+comparingBy fs a b =
+  mconcat $ [(\x -> x a b)] <*> fs
+
+by :: Ord a => (b -> a) -> b -> b -> Ordering
+by f = comparing f
+
+eq :: Eq a => a -> a -> Bool
+eq = (==)
+
+renderPretty :: Pretty a => Settings -> a -> String
+renderPretty settings =
+  render . runReader' settings . showPretty
 
 sortParsedSource :: ParsedSource -> Reader Settings SortedParsedSource
 sortParsedSource ps = do
@@ -26,15 +40,24 @@ sortParsedSource ps = do
 sortModHeader :: ModuleHeader -> Reader Settings SortedModuleHeader
 sortModHeader mh = do
   sortedImports <- sortImports $ _modImports mh
+  sortedExports <- sortExports $ _modExports mh
 
   pure $ SortedModuleHeader
     { _smodLangExts = sort $ _modLangExts mh
     , _smodGhcOpts = sort $ _modGhcOpts mh
     , _smodName = _modName mh
-    , _smodExports = sort $ _modExports mh
+    , _smodExports = sortedExports
     , _smodImports = sortedImports
     }
 
+sortExports :: [IE] -> Reader Settings [IE]
+sortExports ies = do
+  let
+    res = (id =<<) . sortGroups $ sortTopLevel ies
+  pure res
+  where
+    sortTopLevel = L.groupBy (eq `on` topLevelWeight) . L.sortBy (by topLevelWeight)
+    sortGroups = map sortIEs
 
 sortImports :: ImportDecls -> Reader Settings PartitionedImports
 sortImports (ImportDecls decls) = do
@@ -55,19 +78,6 @@ sortImports (ImportDecls decls) = do
     sortGroups settings =
       ImportDeclGroups . map (sortSubgroup settings) . sortTopLevel
 
-comparingBy :: [a -> a -> Ordering] -> a -> a -> Ordering
-comparingBy fs a b =
-  mconcat $ [(\x -> x a b)] <*> fs
-
-by :: Ord a => (b -> a) -> b -> b -> Ordering
-by f = comparing f
-
-eq :: Eq a => a -> a -> Bool
-eq = (==)
-
-renderPretty :: Pretty a => Settings -> a -> String
-renderPretty settings =
-  render . runReader' settings . showPretty
 
 -- | (subgrouped pgk quals, rest)
 pkgQualGroups :: [ImportDecl] -> ([[ImportDecl]], [ImportDecl])
@@ -111,7 +121,7 @@ sortTopLevel :: [[ImportDecl]] -> [[ImportDecl]]
 sortTopLevel decls =
   decls
     >>= withPkgQualsLast . pkgQualGroups
-    >>= L.groupBy (eq `on` weight) . L.sortBy (by weight)
+    >>= L.groupBy (eq `on` topLevelWeight) . L.sortBy (by topLevelWeight)
   where
     withPkgQualsLast (pkgs, rest) = rest : pkgs
 
@@ -130,24 +140,25 @@ sortSubgroup settings =
 
     ideclHidingSort :: Maybe (Bool, [IE]) -> Reader Settings (Maybe (Bool, [IE]))
     ideclHidingSort =
-      pure . (fmap . fmap) ieSort
+      pure . (fmap . fmap) sortIEs
 
-    ieSort :: [IE] -> [IE]
-    ieSort =
-      (>>= sort . map sortIEThingWith)
-        . L.groupBy (eq `on` weight)
-        . L.sortBy (by weight)
 
-    sortIEThingWith :: IE -> IE
-    sortIEThingWith = \case
-      IEThingWith conid names -> IEThingWith conid (sort names)
-      x -> x
+sortIEs :: [IE] -> [IE]
+sortIEs =
+  (>>= sort . map sortIEThingWith)
+    . L.groupBy (eq `on` topLevelWeight)
+    . L.sortBy (by topLevelWeight)
 
-class Weight x where
-  weight :: x -> Int
+sortIEThingWith :: IE -> IE
+sortIEThingWith = \case
+  IEThingWith conid names -> IEThingWith conid (sort names)
+  x -> x
 
-instance Weight ImportDecl where
-  weight decl =
+class TopLevelWeight x where
+  topLevelWeight :: x -> Int
+
+instance TopLevelWeight ImportDecl where
+  topLevelWeight decl =
     sum
       [ qualWeight,
         asWeight,
@@ -170,22 +181,25 @@ instance Weight ImportDecl where
           )
           $ ideclHiding decl
 
--- really should be TopLevelGroupWeight?
-instance Weight QVar where
-  weight = \case
-    VId (QVarId _) -> 100
-    VSym (QVarSym x) -> 200
+qWeight :: Int -> Qual -> Int
+qWeight base (Qual quals x) =
+  if null quals then base else base + 10
 
-instance Weight CName where
-  weight = \case
-    CVarId _ -> 100
-    CVarSym (QVarSym x) -> 200
-    CConId _ -> 300
-    CConSym (QConSym x) -> 400
+instance TopLevelWeight QVar where
+  topLevelWeight = \case
+    VId (QVarId q) -> qWeight 100 q
+    VSym (QVarSym q) -> qWeight 200 q
 
-instance Weight IE where
-  weight = \case
-    IEVar x -> weight x
+instance TopLevelWeight CName where
+  topLevelWeight = \case
+    CVarId (QVarId q) -> qWeight 100 q
+    CVarSym (QVarSym q) -> qWeight 200 q
+    CConId (QConId q) -> qWeight 300 q
+    CConSym (QConSym q) -> qWeight 400 q
+
+instance TopLevelWeight IE where
+  topLevelWeight = \case
+    IEVar x -> topLevelWeight x
     IEThingAbs _ -> 300
     IEThingAll _ -> 400
     IEThingWith _ _ -> 500
