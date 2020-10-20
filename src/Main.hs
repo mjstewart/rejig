@@ -1,11 +1,9 @@
 module Main where
 
 import qualified Control.Exception as Ex
-import Data.Text as T
-import qualified Data.Text as T
 import Rejig.Sorter
 import Rejig.Parser
-import Rejig.Pretty (Pretty, showPretty)
+import Rejig.Pretty (showPretty)
 import Rejig.Settings
 import Text.Megaparsec
 import Text.PrettyPrint (render)
@@ -19,7 +17,7 @@ mkDefaultSettings =
     Settings
       { _sQualifiedStyle = QualifiedPre,
         _sGroupByPrefix = ["DA.", "Rejig"],
-        _sShowGroupComments = True
+        _sDisplayGroupTitle = True
       , _sImportBorderTop = True
       , _sImportBorderBottom = True
       }

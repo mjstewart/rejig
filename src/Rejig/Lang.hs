@@ -6,6 +6,7 @@ import qualified Data.Text as Text
 
 type Parser = Parsec Void Text
 
+runReader' :: r -> Reader r c -> c
 runReader' = flip runReader
 
 postValidate ::

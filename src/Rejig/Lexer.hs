@@ -1,21 +1,19 @@
 module Rejig.Lexer where
 
-import Control.Monad (void)
 import Control.Monad.Combinators
-import Rejig.Lang
+import Rejig.Lang ( applyOr, postValidate, Parser )
 import Rejig.Ast
 import qualified Data.Char as Char
 import qualified Data.Set as Set
-import qualified Data.Set (Set)
-import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import Text.Megaparsec.Debug
 import Prelude hiding (many, some)
-import Text.Megaparsec.Debug
+
+{-| This file contains all the lexing primitives to parse import/export declarations by using
+  https://www.haskell.org/onlinereport/syntax-iso.html
+-}
 
 special :: Set Char
 special =
@@ -107,32 +105,33 @@ blockComment :: Parser ()
 blockComment =
   L.skipBlockComment "{-" "-}"
 
--- | space consumer including new lines
+-- | newline space consumer that skips comments
 scn :: Parser ()
 scn =
   L.space space1 lineComment blockComment
 
--- | literal space only consumer, no new lines
+-- | newline space consumer that doesnt skip comments
+scnComment :: Parser ()
+scnComment =
+  L.space space1 empty empty
+
+-- | literal space consumer that skips comments
 sc :: Parser ()
 sc =
   L.space (void $ takeWhile1P Nothing (== ' ')) lineComment blockComment
 
--- | empty space consumer
-emptySc :: Parser ()
-emptySc =
-  L.space space1 empty empty
-
+-- | literal space consumer that doesnt skip comments
 sce :: Parser ()
 sce =
   L.space (void $ takeWhile1P Nothing (== ' ')) empty empty
 
+-- | symbol with newline space consumer that doesnt skip comments
+symbolComment :: Text -> Parser Text
+symbolComment = L.symbol scnComment
 
---
-esymbol :: Text -> Parser Text
-esymbol = L.symbol emptySc
-
-elexeme :: Parser a -> Parser a
-elexeme = L.lexeme emptySc
+-- | lexeme with newline space consumer that doesnt skip comments
+lexemeComment :: Parser a -> Parser a
+lexemeComment = L.lexeme scnComment
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme scn
@@ -152,16 +151,18 @@ parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
 pragma :: Parser a -> Parser a
-pragma = between (esymbol "{-#") (esymbol "#-}")
+pragma = between (symbolComment "{-#") (symbolComment "#-}")
 
 takeTillNewLine :: Parser Text
 takeTillNewLine =
   takeWhileP Nothing (/= '\n')
 
+-- ends with a new line and consumes all space up until the next potential comment
 singleLineCommentP :: Parser Text
 singleLineCommentP =
-  (esymbol "--" *> takeTillNewLine) <* newline <* sce
+  (symbolComment "--" *> takeTillNewLine) <* newline <* sce
 
+-- collects the inner contents of a {- block comment -}
 blockCommentP :: Parser Comment
 blockCommentP =
   BlockComment . T.pack <$> ((block "{-" *> manyTill anySingle (string "-}")) <* sce)
@@ -176,7 +177,6 @@ stringLit :: Parser Text
 stringLit =
   lexeme $ char '"' >> T.pack <$> manyTill L.charLiteral (char '"')
 
-
 small :: Parser Char
 small =
   lowerChar <|> char '_'
@@ -184,6 +184,9 @@ small =
 large :: Parser Char
 large =
   upperChar
+
+wrap :: Text -> Text
+wrap x = "(" <> x <> ")"
 
 ascSymbol :: Parser Char
 ascSymbol =
@@ -193,10 +196,6 @@ ascSymbol =
       if Set.member result ascSymbols
       then Right result
       else Left $ show result <> " is not a legal ascii symbol"
-
-
-wrap :: Text -> Text
-wrap x = "(" <> x <> ")"
 
 -- | ascSymbol | uniSymbol<special | _ | : | " | '>
 -- where uniSymbol = any Unicode symbol or punctuation
@@ -211,7 +210,6 @@ sym =
       if Set.member result specialSyms
       then Left $ show result <> " is a reserved special symbol"
       else Right result
-
 
 -- | (small {small | large | digit | ' })<reservedid>
 varid :: Parser Text
@@ -234,9 +232,8 @@ conid =
   where
     body = applyOr [Char.isLower, Char.isUpper, Char.isDigit, (== '\'')]
 
-
 -- | ( symbol {symbol | :})<reservedop | dashes>
--- dashes ignored since lexeme/symbol space consumer ignores them
+-- dashes implicitly ignored since lexeme/symbol space consumer ignores them
 varsym :: Parser Text
 varsym =
   postValidate check parser
@@ -274,9 +271,14 @@ tycls = conid
 modid :: Parser ConId
 modid = ConId <$> conid
 
--- | This parser is abit involved due to the last element being a different lexeme type.
--- The lookAhead is a preprocessing step, similar to doing a string split to identify the last
--- element to run a different parser over
+{-| This parser is abit involved due to the last element being a different lexeme type.
+  Eg. A B C use the same parser, but ??? can be something else.
+
+  A.B.C.???
+
+  The lookAhead is a preprocessing step, similar to doing a string split to identify the last
+  element to run a different parser over.
+ -}
 modids :: Parser Text -> Parser Qual
 modids endP = do
   segmentCount <- (dec . length) <$> (lookAhead $ word `sepBy` dot)

@@ -3,25 +3,14 @@
 
 module Rejig.Parser where
 
-import Control.Monad (void)
 import Control.Monad.Combinators
 import Control.Monad.Reader
-import qualified Data.Char as Char
-import qualified Data.Set (Set)
-import qualified Data.Set as Set
-import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text as Text
-import Data.Void
 import Rejig.Ast
-import Rejig.Lang
-import Text.Megaparsec.Debug
+import Rejig.Lang ( Parser )
 import Rejig.Lexer
-import Rejig.Pretty (Pretty, showPretty)
-import Rejig.Settings
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
 import Prelude hiding (many, some)
 
 -- | {-# LANGUAGE <Extension> #-}
@@ -41,11 +30,11 @@ ieP :: Parser [IE]
 ieP =
   parens $
     choice
-      [ try thingWithP,
-        try thingAllP,
-        try thingAbsP,
-        try moduleContents,
-        varP
+      [ try thingWithP
+      , try thingAllP
+      , try thingAbsP
+      , try moduleContents
+      , varP
       ]
       `sepBy` comma
   where
@@ -62,10 +51,10 @@ ieP =
     cnameP =
       parens $
         choice
-          [ try $ CVarId <$> qvarid,
-            try $ CVarSym <$> qvarsym,
-            try $ CConId <$> qconid,
-            try $ CConSym <$> qconsym
+          [ try $ CVarId <$> qvarid
+          , try $ CVarSym <$> qvarsym
+          , try $ CConId <$> qconid
+          , try $ CConSym <$> qconsym
           ]
           `sepBy` comma
 
@@ -115,62 +104,16 @@ parseSourceP = do
   _srcRest <- T.pack <$> (manyTill anySingle eof)
   pure $ ParsedSource {..}
 
+-- | Collects any comments that occur before `p`.
 leadingCommentedThingP :: Parser a -> Parser (LeadingCommentedThing a)
 leadingCommentedThingP p = do
-  LeadingCommentedThing <$> leadingCommentsP p <*> p
-
-{-
-   {- block -} | [-- sl] | module start
--}
-leadingCommentsP :: Parser a -> Parser [Comment]
-leadingCommentsP p =
-  emptySc *> (many $
-    choice [
-      try $ SingleLineComment <$> singleLineCommentP
-    , try $ CommentNewLine <$ (elexeme newline)
-    , try $ blockCommentP
-    ])
-
--- manySingleLines :: Parser a -> Parser (LeadingCommentedThing a)
--- manySingleLines p = do
-  -- (a, b) <- (manyTill_ singleLineCommentP (leadingCommentsP p))
-  -- let
-    -- comments = SingleLineComments a
-
-    -- restComments = _leadingComments b
-    -- thing = _leadingThing b
-
-  -- pure $ LeadingCommentedThing (comments : restComments) thing
-  -- pure $ LeadingCommentedThing [(SingleLineComments a)] b
-
-
-  -- many (try (elexeme singleLineCommentsP) <|> blockCommentP)
-  -- many singleLineCommentsP
-  -- emptySc *> (many $ (try singleLineCommentP <|> try blockCommentP))
-
--- m2 :: Parser Comment
--- m2 =
-  -- SingleLineComments <$>
-    -- (try (many (singleLineCommentP <* lookAhead singleLineCommentP)))
-
--- singleLineCommentP :: Parser Comment
--- singleLineCommentP =
-  -- many
-
-
--- singleLineCommentsP :: Parser Comment
--- singleLineCommentsP =
-  -- SingleLineComments <$> (manyTill (dbg "scp" singleLineCommentP) (dbg "lahead" $ lookAhead leadingCommentsP))
-
-  -- many (try blockCommentP)
-  -- SingleLineComments <$> (many singleLineCommentP)
-
-
-  -- (x, y) <- manyTill_ (elexeme singleLineCommentP) (many langExtP)
-  -- pure $ LeadingCommentedThing [SingleLineComments x] y
-  -- SingleLineComments <$> (manyTill singleLineCommentP end)
-
--- singleLineComments2P :: Parser (LeadingCommentedThing [LangExt])
--- singleLineComments2P = do
-  -- (x, y) <- manyTill_ (elexeme singleLineCommentP) ()
-  -- pure $ LeadingCommentedThing [SingleLineComments x] y
+  LeadingCommentedThing <$> leadingCommentsP <*> p
+  where
+    leadingCommentsP :: Parser [Comment]
+    leadingCommentsP =
+      scnComment *> (many $
+        choice [
+          try $ SingleLineComment <$> singleLineCommentP
+        , try $ CommentNewLine <$ (lexemeComment newline)
+        , try $ blockCommentP
+        ])

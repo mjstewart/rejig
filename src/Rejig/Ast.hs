@@ -12,11 +12,11 @@ data Comment
   -- ^ -- a single line
   | BlockComment Text
   -- ^ {- a block comment -}
-
   | CommentNewLine
+  -- ^ seperator to detect blocks of multiline single comments
     deriving (Show, Eq)
 
--- ^ Represents source code with a leading comment then something else.
+-- ^ Represents source code that begins with a leading comment then something else.
 data LeadingCommentedThing a = LeadingCommentedThing
  { _leadingComments :: [Comment]
  , _leadingThing :: a
@@ -34,31 +34,37 @@ newtype GhcOption = GhcOption {unGhcOption :: Text}
 
 -- | Inspired by https://hackage.haskell.org/package/ghc-lib-parser-8.10.1.20200324/docs/GHC-Hs-ImpExp.html#t:ImportDecl
 data ImportDecl = ImportDecl
-  { -- | A ModuleName is essentially a string e.g. Data.List
-    ideclName :: QConId,
-    -- | Package qualifier
-    ideclPkgQual :: Maybe Text,
-    -- | Does the qualified keyword appear
-    ideclIsQual :: Bool,
-    -- | as Module
-    ideclAs :: Maybe QConId,
-    -- | (True => hiding, names)
-    ideclHiding :: Maybe (Bool, [IE])
+  { ideclName :: QConId
+    -- ^ A ModuleName is essentially a string e.g. Data.List
+  , ideclPkgQual :: Maybe Text
+    -- ^ Package qualifier
+  , ideclIsQual :: Bool
+    -- ^ Does the qualified keyword appear
+  , ideclAs :: Maybe QConId
+    -- ^ as Module
+  , ideclHiding :: Maybe (Bool, [IE])
+    -- ^ (True => hiding, names)
   }
   deriving (Show, Eq)
 
 data PartitionedImports = PartitionedImports
-  { _piRest :: CG ImportDeclGroups,
-    _piPrefixTargets :: [CG ImportDeclGroups],
-    _piPkgQuals :: CG ImportDeclGroups
+  { _piRest :: CG ImportDeclGroups
+    -- ^ catch all 'standard imports' that dont fall into the other groups
+  , _piPrefixTargets :: [CG ImportDeclGroups]
+    -- ^ imports grouped by user defined setting
+  , _piPkgQuals :: CG ImportDeclGroups
+    -- ^ contains package qualified imports in the form - import "pkg" ...
   }
   deriving (Show, Eq)
 
+-- | CG = Comment group, its purpose is to attach a comment to the start of a group which acts as a title.
 data CG a = CG
   { _cgComment :: Maybe Text,
     _cgGroup :: a
   }
   deriving (Show, Eq, Functor)
+
+-- Defining lots of newtypes for things to implement 'Pretty' typeclass instance.
 
 newtype ImportDecls = ImportDecls {unImportDecls :: [ImportDecl]}
   deriving newtype (Show, Eq)
@@ -69,15 +75,6 @@ newtype ImportDeclGroups = ImportDeclGroups {unImportDeclGroups :: [ImportDecls]
 newtype QVarId = QVarId { unQVarId :: Qual }
   deriving stock (Show)
   deriving newtype (Eq, Ord)
-
--- newtype VarId = VarId {unVarId :: Text}
-  -- deriving stock (Show)
-  -- deriving newtype (Eq, Ord)
-
-
--- newtype VarSym = VarSym {unVarSym :: Text}
-  -- deriving stock (Show)
-  -- deriving newtype (Eq, Ord)
 
 newtype QVarSym = QVarSym {unQVarSym :: Qual }
   deriving stock (Show)
@@ -91,14 +88,9 @@ newtype QConId = QConId {unQConId :: Qual}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
 
--- newtype ConSym = ConSym {unConSym :: Text}
-  -- deriving stock (Show)
-  -- deriving newtype (Eq, Ord)
-
 newtype QConSym = QConSym {unQConSym :: Qual}
   deriving stock (Show)
   deriving newtype (Eq, Ord)
-
 
 data Qual = Qual [ConId] Text
   deriving (Eq)
@@ -108,7 +100,7 @@ instance Show Qual where
     T.unpack . T.concat . intersperse "." $ (map unConId modids) ++ [x]
 
 instance Ord Qual where
-  compare a b = compare (show a) (show b)
+  compare a b = compare (show a :: String) (show b :: String)
 
 data CName
   = CVarId QVarId
@@ -134,9 +126,9 @@ varIndex = \case
   VId _ -> 0
   VSym _ -> 1
 
--- custom instances are needed since the comparison is done on the wrapped type.
--- The {type}Index function exists to use the overall ordering to avoid having to
--- declare every permutation.
+{- Since the comparison is done on the inner wrapped type, custom `Ord` instances are defined.
+   The final catch all case uses a helper function that avoids needing to define every permutation.
+-}
 
 instance Ord QVar where
   compare (VId a) (VId b) = compare a b
@@ -151,18 +143,17 @@ instance Ord CName where
   compare a b = compare (cnameIndex a) (cnameIndex b)
 
 data IE
-  = -- | Imported or Exported Variable
-    IEVar QVar
-  | -- | Imported or exported Thing with Absent list, eg: Month ()
-    IEThingAbs QConId
-  | -- | ClassType plus all methods/constructors, eg: Month(..)
-    IEThingAll QConId
-  | -- | ClassType plus some methods/constructors eg: Month(Jan, Feb)
-    IEThingWith QConId [CName]
+  = IEVar QVar
+  -- ^ Imported or Exported Variable
+  | IEThingAbs QConId
+  -- ^ Imported or exported Thing with Absent list, eg: Month ()
+  | IEThingAll QConId
+  -- ^ ClassType plus all methods/constructors, eg: Month(..)
+  | IEThingWith QConId [CName]
+  -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
   | IEModuleContents QConId
     -- ^ module xyz
   deriving (Show, Eq)
-
 
 ieIndex :: IE -> Int
 ieIndex = \case
@@ -182,15 +173,7 @@ instance Ord IE where
     compare a b
   compare a b = compare (ieIndex a) (ieIndex b)
 
--- data EThing
-  -- = EThingVar QVar
-    -- -- ^ Exported Variable
-  -- | EThingAll QConId
-    -- -- ^ ClassType plus all methods/constructors, eg: Month(..)
-  -- | EThingWith QConId [CName]
-    -- -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
-  -- deriving (Show, Eq)
-
+-- Initial parse result
 data ModuleHeader = ModuleHeader
   { _modLangExts :: [LangExt]
   , _modGhcOpts :: [GhcOption]
@@ -215,13 +198,9 @@ data ParsedSource = ParsedSource
  }
   deriving (Show, Eq)
 
+-- This tool only formats the mod header, the rest of the source code remains untouched
 data SortedParsedSource = SortedParsedSource
  { _ssrcModHeader :: LeadingCommentedThing SortedModuleHeader
  , _ssrcRest :: Text
  }
   deriving (Show, Eq)
-
--- data Program
-  -- = LanguageExtensions [Text]
-  -- | Module ModuleDecl
-  -- deriving (Show, Eq)

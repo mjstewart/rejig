@@ -4,9 +4,7 @@
 
 module Rejig.Sorter (sortParsedSource) where
 
-import Data.Bifunctor (first)
 import qualified Data.List as L
-import qualified Data.Map as Map
 import qualified Data.Text as T
 import Rejig.Ast
 import Rejig.Lang (runReader')
@@ -28,6 +26,7 @@ renderPretty :: Pretty a => Settings -> a -> String
 renderPretty settings =
   render . runReader' settings . showPretty
 
+-- | Main entry point to sorting the module header of the parsed source file
 sortParsedSource :: ParsedSource -> Reader Settings SortedParsedSource
 sortParsedSource ps = do
   _ssrcModHeader <- sortModHeader $ _leadingThing $ _srcModHeader ps
@@ -51,10 +50,8 @@ sortModHeader mh = do
     }
 
 sortExports :: [IE] -> Reader Settings [IE]
-sortExports ies = do
-  let
-    res = (id =<<) . sortGroups $ sortTopLevel ies
-  pure res
+sortExports =
+  pure . (id =<<) . sortGroups . sortTopLevel
   where
     sortTopLevel = L.groupBy (eq `on` topLevelWeight) . L.sortBy (by topLevelWeight)
     sortGroups = map sortIEs
@@ -62,16 +59,21 @@ sortExports ies = do
 sortImports :: ImportDecls -> Reader Settings PartitionedImports
 sortImports (ImportDecls decls) = do
   settings <- ask
+
+  -- sorts each of the partitioned prefix groups
   (_piPrefixTargets, rest) <- first (map $ fmap (sortGroups settings)) <$> (byPrefixPartition decls)
 
-  let (_piPkgQuals, rest') = first (CG (Just "package qualified") . sortGroups settings) $ pkgQualGroups rest
+  let
+      -- sorts each of the partitioned pkg qualfified groups
+      (_piPkgQuals, rest') = first (CG (Just "package qualified") . sortGroups settings) $ pkgQualGroups rest
+
       _piRest = CG (Just "standard imports") $ sortGroups settings [rest']
 
   pure $
     PartitionedImports
-      { _piPrefixTargets,
-        _piPkgQuals,
-        _piRest
+      { _piPrefixTargets
+      , _piPkgQuals
+      , _piRest
       }
   where
     sortGroups :: Settings -> [[ImportDecl]] -> ImportDeclGroups
@@ -79,7 +81,7 @@ sortImports (ImportDecls decls) = do
       ImportDeclGroups . map (sortSubgroup settings) . sortTopLevel
 
 
--- | (subgrouped pgk quals, rest)
+-- | partition pkg qualified decls
 pkgQualGroups :: [ImportDecl] -> ([[ImportDecl]], [ImportDecl])
 pkgQualGroups =
   first subgroup . L.partition (isJust . ideclPkgQual)
@@ -91,7 +93,7 @@ pkgQualGroups =
     getPkgQual =
       maybe "" id . ideclPkgQual
 
--- | Groups together any user defined prefixes
+-- | group together any user defined prefixes
 byPrefixPartition :: [ImportDecl] -> Reader Settings ([CG [[ImportDecl]]], [ImportDecl])
 byPrefixPartition decls = do
   settings <- ask
@@ -128,8 +130,7 @@ sortTopLevel decls =
 sortSubgroup :: Settings -> [ImportDecl] -> ImportDecls
 sortSubgroup settings =
   ImportDecls
-    . L.sortBy
-      (comparingBy [by (renderPretty settings . ideclName)])
+    . L.sortBy (comparingBy [by (renderPretty settings . ideclName)])
     . map sortSpecificImports
   where
     sortSpecificImports :: ImportDecl -> ImportDecl
@@ -148,41 +149,63 @@ sortIEs =
   (>>= sort . map sortIEThingWith)
     . L.groupBy (eq `on` topLevelWeight)
     . L.sortBy (by topLevelWeight)
+  where
+    sortIEThingWith :: IE -> IE
+    sortIEThingWith = \case
+      IEThingWith conid names -> IEThingWith conid (sort names)
+      x -> x
 
-sortIEThingWith :: IE -> IE
-sortIEThingWith = \case
-  IEThingWith conid names -> IEThingWith conid (sort names)
-  x -> x
+{-| Sorting is a little bit complicated so its worth explaining how it works.
+  Theres lots of components to an import or export declaration so we give each decl a 'weighting score'
+  which determines its top level group positioning in the final output.
+
+  eg think 'qualified' keyword is something we might want to make a group of imports out of
+  but then there could also be 'as' and 'hiding' keywords that we also want to group by.
+
+  The end result is that the weightings form the top level groups
+
+  eg: [imports] -> [[imports]]
+
+  other functions then map over each top level group and peform a detailed subsort.
+-}
 
 class TopLevelWeight x where
   topLevelWeight :: x -> Int
 
 instance TopLevelWeight ImportDecl where
+  -- higher values appear last
   topLevelWeight decl =
     sum
       [ qualWeight,
         asWeight,
-        ieListWeight
+        ieNamesWeight
       ]
     where
-      -- Highest weights get placed last
+      -- qualified is a bigger compound keyword group so its given a higher weight.
       qualWeight = bool 0 10000 $ ideclIsQual decl
+      -- but then we have smaller keywords that can be subgrouped through a smaller weight
       asWeight = maybe 0 (const 1000) $ ideclAs decl
 
-      ieListWeight =
+      -- names is something in parens section (a, b, c) - "import Apple (a, b, c)"
+      ieNamesWeight =
         maybe
           0
           ( \(isHiding, names) ->
-              -- import Apple () == empty names, slightly increase weight to push it down
-              if null names
-                then 500
-                else -- hiding ordered first
-                  bool 4000 2000 isHiding
+            {-
+               Giving Bob the +500 pushes an import with no names down into its own group
+
+               import Alice
+               import Bob ()
+            -}
+              if null names then 500
+              else
+                -- hiding ordered first
+                bool 4000 2000 isHiding
           )
           $ ideclHiding decl
 
 qWeight :: Int -> Qual -> Int
-qWeight base (Qual quals x) =
+qWeight base (Qual quals _) =
   if null quals then base else base + 10
 
 instance TopLevelWeight QVar where

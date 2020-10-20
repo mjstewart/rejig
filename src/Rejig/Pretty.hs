@@ -1,7 +1,6 @@
 module Rejig.Pretty where
 
 import Control.Monad.Reader
-import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.List as L
 import Rejig.Ast
@@ -49,6 +48,12 @@ borderLine =
   where
     lineLength = 80
 
+{-|
+  import A.B as C
+    ( hello      <- handles layout for this section
+    , world
+    )
+-}
 layoutVerticalIEs :: Settings -> [IE] -> Doc
 layoutVerticalIEs settings = \case
   [] -> parens empty
@@ -60,17 +65,18 @@ layoutVerticalIEs settings = \case
         rparen
       ]
 
+-- | surround package qualifier in quotes
 prettyPkg :: ImportDecl -> Doc
 prettyPkg =
   maybe empty (doubleQuotes . ttext) . ideclPkgQual
 
 prettyName :: Settings -> ImportDecl -> Doc
 prettyName settings x =
-  if ideclIsQual x
-    then case _sQualifiedStyle settings of
+  if ideclIsQual x then
+    case _sQualifiedStyle settings of
       QualifiedPre -> qualifiedText <+> modids
       QualifiedPost -> modids <+> qualifiedText
-    else modids
+  else modids
   where
     modids = runReader' settings . showPretty $ ideclName x
 
@@ -89,39 +95,10 @@ prettyAs :: Settings -> ImportDecl -> Doc
 prettyAs settings =
   maybe empty ((asText <+>) . runReader' settings . showPretty) . ideclAs
 
-instance Pretty Comment where
-  showPretty = \case
-    -- SingleLineComments xs -> pure $ vcat $ map (\x -> text "--" <+> (ttext $ T.strip x)) xs
-    SingleLineComment x -> pure $ text "--" <+> (ttext $ T.strip x)
-    CommentNewLine -> pure empty
-    BlockComment x ->
-      pure $ vcat [
-        if T.isPrefixOf "|" (T.strip x) then
-          hcat [text "{-", ttext $ T.strip x]
-        else
-          text "{-" <+> (ttext $ T.strip x)
-      ,
-       text "-}"
-      ]
-
--- vcatGroup :: [a] -> Doc
--- vcatGroup xs =
-  -- if null xs  else [vcat xs, newline]
-
+-- | vcat but put newlines between
 vcatSep:: [Doc] -> Doc
 vcatSep =
   vcat . intersperse newline . filter (not . isEmpty)
-
-
-instance Pretty ParsedSource where
-  showPretty x = do
-    settings <- ask
-
-    pure $ vcatSep
-     [ runReader' settings . showPretty $ _srcModHeader x
-     , ttext $ _srcRest x
-     ]
-    -- _srcModHeader
 
 instance Pretty SortedParsedSource where
   showPretty x = do
@@ -133,9 +110,16 @@ instance Pretty SortedParsedSource where
      , ttext $ _ssrcRest x
      ]
 
+{-| When printing comments, we need to preserve multiline comments while still
+  identifiying single and block comments.
 
--- | Groups exists to make formatting easier since each type of comment
--- style is separated by a newline whilst multiline comments are preserved.
+  The parser sets up the structure to make our life easier.
+
+  [SingleLineComment, SingleLineComment, CommentNewLine, BlockComment]
+
+  The `CommentNewLine` constructor is a flag to represent the end of comment
+  group which we insert a new line between.
+-}
 toCommentGroups :: Settings -> [Comment] -> Doc
 toCommentGroups settings =
   vcatSep
@@ -152,10 +136,7 @@ instance (Pretty a) => Pretty (LeadingCommentedThing a) where
 
     pure $
       vcatSep [
-        -- ttext $ show $ _leadingComments x
-      -- , ttext $ show $ g $ _leadingComments x
-      -- vcat $ map (runReader' settings . showPretty) $ pt3 settings (g (_leadingComments x))
-       toCommentGroups settings $ _leadingComments x
+        toCommentGroups settings $ _leadingComments x
       , runReader' settings . showPretty $ _leadingThing x
       ]
 
@@ -163,29 +144,17 @@ instance (Pretty a) => Pretty (LeadingCommentedThing a) where
 prettyVcat :: Pretty a => Settings -> [a] -> Doc
 prettyVcat s = vcat . map (runReader' s . showPretty)
 
-
-instance Pretty ModuleHeader where
-  showPretty x = do
-    settings <- ask
-
-    pure $ vcatSep [
-        prettyVcat settings $ _modLangExts x
-      , prettyVcat settings $ _modGhcOpts x
-        -- vcat $ map (runReader' settings . showPretty) $ _modLangExts x
-      -- , vcat $ map (runReader' settings . showPretty) $ _modGhcOpts x
-      ,
-      vcat
-       [ hang
-        ( hsep
-            [ text "module"
-            , runReader' settings . showPretty $ _modName x
-            ]
-        )
-        2
-        $ layoutVerticalIEs settings $ _modExports x
-       , text "where"
-       ]
-      , runReader' settings . showPretty $ _modImports x
+instance Pretty Comment where
+  showPretty = \case
+    SingleLineComment x -> pure $ text "--" <+> (ttext $ T.strip x)
+    CommentNewLine -> pure empty
+    BlockComment x ->
+      -- some special handling for haddock block comment so no white space is added when joining
+      pure $ vcat [
+        if T.isPrefixOf "|" $ T.strip x
+        then hcat [text "{-", ttext $ T.strip x]
+        else text "{-" <+> (ttext $ T.strip x)
+       , text "-}"
       ]
 
 instance Pretty SortedModuleHeader where
@@ -210,6 +179,12 @@ instance Pretty SortedModuleHeader where
           ]
       ]
 
+{-| Layout structure for import decls
+
+  1. standard imports
+  2. imports grouped by user defined targeted prefixes
+  3. package qualified imports
+-}
 instance Pretty PartitionedImports where
   showPretty x = do
 
@@ -219,33 +194,38 @@ instance Pretty PartitionedImports where
       (vcat <$> (mapM prettyCG $ _piPrefixTargets x))
       (prettyCG $ _piPkgQuals x)
 
--- <*> (prettyCG $ _piPrefixTargets x)
--- <*> (mapM prettyCG $ _piPkgQuals x )
+{-| An optional title is included if the setting is enabled
 
--- pure . vcat . intersperse newline . map (runReader' settings . showPretty) $ unImportDeclGroups x
+  -- comment group title
 
+  import decl 1
+  import decl 2
+  ...
+-}
 prettyCG :: Pretty a => CG a -> Reader Settings Doc
 prettyCG cg = do
   settings <- ask
-  let content = runReader' settings $ showPretty $ _cgGroup cg
 
-  pure $ if isEmpty content then empty
-  else
-    vcat
-      [ comment settings,
-        runReader' settings $ showPretty $ _cgGroup cg
-      ]
-  where
-    comment settings =
-      if _sShowGroupComments settings
-        then maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $ _cgComment cg
-        else empty
+  let
+    content = runReader' settings $ showPretty $ _cgGroup cg
+
+    comment =
+      if _sDisplayGroupTitle settings then
+        maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $ _cgComment cg
+      else empty
+
+  pure $
+    if isEmpty content then empty
+    else
+      vcat
+        [ comment
+        , content
+        ]
 
 instance Pretty ImportDeclGroups where
   showPretty x = do
     settings <- ask
     pure . vcatSep . map (runReader' settings . showPretty) $ unImportDeclGroups x
-
 
 instance Pretty ImportDecls where
   showPretty x = do
@@ -259,11 +239,11 @@ instance Pretty ImportDecl where
     pure $
       hang
         ( hsep
-            [ importText,
-              prettyPkg x,
-              prettyName settings x,
-              prettyAs settings x,
-              preHiding x
+            [ importText
+            , prettyPkg x
+            , prettyName settings x
+            , prettyAs settings x
+            , preHiding x
             ]
         )
         2
@@ -279,8 +259,8 @@ instance Pretty IE where
   showPretty (IEThingWith x xs) =
     asks $ \settings ->
       hsep
-        [ runReader (showPretty x) settings,
-          parens $ hsep $ punctuate comma $ map (runReader' settings . showPretty) xs
+        [ runReader (showPretty x) settings
+        , parens $ hsep $ punctuate comma $ map (runReader' settings . showPretty) xs
         ]
   showPretty (IEModuleContents x) =
     asks $ \settings ->
@@ -303,6 +283,7 @@ instance Pretty GhcOption where
   showPretty (GhcOption x) =
     pure $ text "{-# OPTIONS_GHC" <+> ttext x <+> text "#-}"
 
+-- | A.B.C.thing
 instance Pretty Qual where
   showPretty (Qual conids thing) = do
     settings <- ask
@@ -310,9 +291,6 @@ instance Pretty Qual where
       hcat $
         intersperse dot $
           map (runReader' settings . showPretty) conids ++ [ttext thing]
-
-        -- map (runReader' settings . showPretty) conids
-          -- ++ [runReader (showPretty thing) settings]
 
 instance Pretty Text where
   showPretty = pure . ttext
@@ -330,24 +308,18 @@ instance Pretty CName where
 instance Pretty QVarId where
   showPretty (QVarId x)=
     asks $ runReader (showPretty x)
-    --runReader showPretty . unQVarId
-    -- pure . text . unQVarId
 
 instance Pretty QVarSym where
   showPretty (QVarSym x) =
     asks $ runReader (showPretty x)
-    -- pure . ttext . unQVarSym
 
 instance Pretty QConId where
   showPretty (QConId x) =
     asks $ runReader (showPretty x)
-  -- pure . ttext . unQConId
 
 instance Pretty QConSym where
   showPretty (QConSym x) =
     asks $ runReader (showPretty x)
-
-    -- pure . ttext . unQConSym
 
 instance Pretty ConId where
   showPretty =
