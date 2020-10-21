@@ -7,15 +7,107 @@ import Rejig.Pretty (showPretty)
 import Rejig.Settings
 import Text.Megaparsec
 import Text.PrettyPrint (render)
+import qualified Options.Applicative as O
+import System.FilePath (splitExtension)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+
+data Input
+  = FileInput FilePath
+  | StdInput
+   deriving (Show, Eq)
+
+
+data CliOpts = CliOpts
+ { _cliInputMethod :: Input
+ , _cliGroupByPrefix :: [String]
+ , _cliDisplayGroupTitle :: Bool
+ , _cliImportBorderTop :: Bool
+ , _cliImportBorderBottom :: Bool
+ }
+  deriving (Show, Eq)
+
+fileInput :: O.Parser Input
+fileInput =
+  FileInput <$>
+    (O.strOption $
+      O.long "file"
+      <> O.metavar "FILEPATH"
+      <> O.help "input file path")
+
+stdInput :: O.Parser Input
+stdInput =
+  O.flag' StdInput $
+    O.long "stdin"
+    <> O.help "read from stdin"
+
+inputP :: O.Parser Input
+inputP = fileInput <|> stdInput
+
+-- prefixOptP :: O.Parser [String]
+-- prefixOptP = do
+  -- s <- O.option O.str ( O.long "prefix" )
+  -- _todo
+  -- many (string "prefix")
+prefixP :: O.Parser [String]
+prefixP =
+  map T.unpack . words <$>
+    (O.strOption $
+      O.long "prefixes"
+      <> O.value ""
+      <> O.help "group by prefixes (separate by whitespace)")
+
+importTitleP :: O.Parser Bool
+importTitleP =
+  O.switch $
+    O.long "titles"
+    <> O.help "Display import group titles"
+
+importBorderTopP :: O.Parser Bool
+importBorderTopP =
+  O.switch $
+    O.long "border-top"
+    <> O.help "Display border at the start of import declarations"
+
+importBorderBottomP :: O.Parser Bool
+importBorderBottomP =
+  O.switch $
+    O.long "border-bottom"
+    <> O.help "Display border at the end of import declarations"
+
+cliOpts :: O.Parser CliOpts
+cliOpts = CliOpts
+  <$> inputP
+  <*> prefixP
+  <*> importTitleP
+  <*> importBorderTopP
+  <*> importBorderBottomP
+
+
+
+
+opts :: O.ParserInfo CliOpts
+opts = O.info (cliOpts <**> O.helper)
+  ( O.fullDesc
+  <> O.progDesc "format module header"
+  <> O.header "rejig - sort and format module header declarations" )
 
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = do
+  options <- O.execParser opts
+
+  case _cliInputMethod options of
+    FileInput path -> do
+      putStrLn . T.unpack =<< TIO.readFile path
+    StdInput ->
+      putStrLn . T.unpack =<< TIO.getContents
+
 
 mkDefaultSettings :: IO Settings
 mkDefaultSettings =
   pure $
     Settings
-      { _sQualifiedStyle = QualifiedPre,
+      { _ssrcLang = Haskell,
         _sGroupByPrefix = ["DA.", "Rejig"],
         _sDisplayGroupTitle = True
       , _sImportBorderTop = True

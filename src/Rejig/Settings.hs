@@ -11,7 +11,7 @@ data SourceLang
     deriving (Show, Eq)
 
 data Settings = Settings
- { _sQualifiedStyle :: ImportDeclQualifiedStyleSource
+ { _ssrcLang :: SourceLang
  , _sGroupByPrefix :: [Text]
  , _sDisplayGroupTitle :: Bool
  , _sImportBorderTop :: Bool

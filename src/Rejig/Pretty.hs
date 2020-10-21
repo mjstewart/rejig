@@ -73,9 +73,11 @@ prettyPkg =
 prettyName :: Settings -> ImportDecl -> Doc
 prettyName settings x =
   if ideclIsQual x then
-    case _sQualifiedStyle settings of
-      QualifiedPre -> qualifiedText <+> modids
-      QualifiedPost -> modids <+> qualifiedText
+    case _ssrcLang settings of
+      -- QualifiedPre
+      Haskell -> qualifiedText <+> modids
+      -- QualifiedPost
+      Daml -> modids <+> qualifiedText
   else modids
   where
     modids = runReader' settings . showPretty $ ideclName x

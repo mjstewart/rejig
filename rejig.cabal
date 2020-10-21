@@ -22,9 +22,9 @@ common deps
     , mtl
     , megaparsec
     , parser-combinators
-    , transformers
     , pretty
-
+    , filepath
+    , optparse-applicative
 
   default-language:    Haskell2010
   ghc-options:
@@ -43,6 +43,15 @@ executable rejig
   import: deps
   hs-source-dirs:      src
   main-is:             Main.hs
+  other-modules:
+    Rejig.Ast
+    Rejig.Lang
+    Rejig.Lexer
+    Rejig.Parser
+    Rejig.Pretty
+    Rejig.Settings
+    Rejig.Sorter
+
 
 test-suite rejig-tests
   import: deps
