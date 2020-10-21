@@ -18,7 +18,7 @@ data Input
 data Settings = Settings
  { _sInput :: Input
  , _ssrcLang :: SourceLang
- , _sGroupByPrefix :: [Text]
+ , _sPrefixGroups :: [Text]
  , _sDisplayGroupTitle :: Bool
  , _sImportBorderTop :: Bool
  , _sImportBorderBottom :: Bool

@@ -80,7 +80,6 @@ sortImports (ImportDecls decls) = do
     sortGroups settings =
       ImportDeclGroups . map (sortSubgroup settings) . sortTopLevel
 
-
 -- | partition pkg qualified decls
 pkgQualGroups :: [ImportDecl] -> ([[ImportDecl]], [ImportDecl])
 pkgQualGroups =
@@ -103,7 +102,7 @@ byPrefixPartition decls = do
           first (mergeTargets prefix acc) $ L.partition (T.isPrefixOf prefix . declName settings) rest
       )
       ([], decls)
-      $ _sGroupByPrefix settings
+      $ _sPrefixGroups settings
   where
     declName :: Settings -> ImportDecl -> Text
     declName settings = T.pack . renderPretty settings . ideclName

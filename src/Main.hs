@@ -50,7 +50,7 @@ prefixP =
     (O.strOption $
       O.long "prefixes"
       <> O.value ""
-      <> O.help "group by prefixes (separate by whitespace)")
+      <> O.help "import names beginning with matching prefixes are grouped together (separate by whitespace)")
 
 importTitleP :: O.Parser Bool
 importTitleP =
@@ -82,8 +82,8 @@ settingsP = Settings
 opts :: O.ParserInfo Settings
 opts = O.info (settingsP <**> O.helper)
   $ O.fullDesc
-  <> O.progDesc "format module header"
-  <> O.header "rejig - sort and format module header declarations"
+  <> O.progDesc "Sort and format module header declarations"
+  <> O.header "Rejig"
 
 main :: IO ()
 main = do
@@ -99,7 +99,7 @@ main = do
 runFormatter :: Settings -> Text -> IO ()
 runFormatter settings content = do
   putStrLn $
-    case runParser parseSourceP "test" content of
+    case runParser parseSourceP "<dynamic>" content of
       Left bundle -> errorBundlePretty bundle
       Right res ->
         render $
@@ -112,7 +112,7 @@ mkDefaultSettings =
     Settings
       { _sInput = StdInput
       , _ssrcLang = Haskell
-      , _sGroupByPrefix = ["DA.", "Rejig"]
+      , _sPrefixGroups = ["DA.", "Rejig"]
       , _sDisplayGroupTitle = not True
       , _sImportBorderTop = True
       , _sImportBorderBottom = True
