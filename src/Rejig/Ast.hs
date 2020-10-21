@@ -142,17 +142,18 @@ instance Ord CName where
   compare (CConSym a) (CConSym b) = compare a b
   compare a b = compare (cnameIndex a) (cnameIndex b)
 
+-- | Inspired by https://downloads.haskell.org/~ghc/7.2.1/docs/html/libraries/ghc-7.2.1/HsImpExp.html
 data IE
   = IEVar QVar
   -- ^ Imported or Exported Variable
   | IEThingAbs QConId
-  -- ^ Imported or exported Thing with Absent list, eg: Month ()
+  -- ^ Class/Type - cant tell eg: Month
   | IEThingAll QConId
-  -- ^ ClassType plus all methods/constructors, eg: Month(..)
+  -- ^ Class/Type plus all methods/constructors, eg: Month (..)
   | IEThingWith QConId [CName]
-  -- ^ ClassType plus some methods/constructors eg: Month(Jan, Feb)
+  -- ^ Class/Type plus some methods/constructors eg: Month (Jan, Feb)
   | IEModuleContents QConId
-    -- ^ module xyz
+    -- ^ module xyz - exports only
   deriving (Show, Eq)
 
 ieIndex :: IE -> Int

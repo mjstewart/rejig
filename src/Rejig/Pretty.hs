@@ -56,7 +56,7 @@ borderLine =
 -}
 layoutVerticalIEs :: Settings -> [IE] -> Doc
 layoutVerticalIEs settings = \case
-  [] -> parens empty
+  [] -> empty
   [x] -> parens $ runReader (showPretty x) settings
   (x : xs) ->
     vcat
@@ -176,7 +176,7 @@ instance Pretty SortedModuleHeader where
             2
             $ layoutVerticalIEs settings $ _smodExports x
           , text "where"
-          , if _sImportBorderTop settings then newline $$ borderLine else empty
+          , if _sImportBorderTop settings then newline $$ borderLine $$ newline else newline
           , runReader' settings . showPretty $ _smodImports x
           ]
       ]
@@ -191,7 +191,7 @@ instance Pretty PartitionedImports where
   showPretty x = do
 
     liftA3
-      (\a b c -> vcat [a, b, c])
+      (\a b c -> vcatSep [a, b, c])
       (prettyCG $ _piRest x)
       (vcat <$> (mapM prettyCG $ _piPrefixTargets x))
       (prettyCG $ _piPkgQuals x)
@@ -213,7 +213,7 @@ prettyCG cg = do
 
     comment =
       if _sDisplayGroupTitle settings then
-        maybe empty (\c -> vcat [newline, singleLineComment c, newline]) $ _cgComment cg
+        maybe empty (\c -> vcat [singleLineComment c, newline]) $ _cgComment cg
       else empty
 
   pure $
@@ -255,7 +255,7 @@ instance Pretty IE where
   showPretty (IEVar x) =
     asks $ runReader (showPretty x)
   showPretty (IEThingAbs x) =
-    asks $ \settings -> runReader (showPretty x) settings <+> parens empty
+    asks $ runReader (showPretty x)
   showPretty (IEThingAll x) =
     asks $ \settings -> runReader (showPretty x) settings <+> parens (text "..")
   showPretty (IEThingWith x xs) =

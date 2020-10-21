@@ -10,8 +10,14 @@ data SourceLang
   | Daml
     deriving (Show, Eq)
 
+data Input
+  = FileInput FilePath
+  | StdInput
+   deriving (Show, Eq)
+
 data Settings = Settings
- { _ssrcLang :: SourceLang
+ { _sInput :: Input
+ , _ssrcLang :: SourceLang
  , _sGroupByPrefix :: [Text]
  , _sDisplayGroupTitle :: Bool
  , _sImportBorderTop :: Bool

@@ -94,7 +94,7 @@ modHeaderP = do
   _modLangExts <- many $ try langExtP
   _modGhcOpts <- many $ try ghcOptionP
   _modName <- keyword "module" *> qconid
-  _modExports <- ieP <* keyword "where"
+  _modExports <- (ieP <|> pure []) <* keyword "where"
   _modImports <- importsP
   pure $ ModuleHeader {..}
 

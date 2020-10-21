@@ -12,20 +12,6 @@ import System.FilePath (splitExtension)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
-data Input
-  = FileInput FilePath
-  | StdInput
-   deriving (Show, Eq)
-
-
-data CliOpts = CliOpts
- { _cliInputMethod :: Input
- , _cliGroupByPrefix :: [String]
- , _cliDisplayGroupTitle :: Bool
- , _cliImportBorderTop :: Bool
- , _cliImportBorderBottom :: Bool
- }
-  deriving (Show, Eq)
 
 fileInput :: O.Parser Input
 fileInput =
@@ -44,14 +30,23 @@ stdInput =
 inputP :: O.Parser Input
 inputP = fileInput <|> stdInput
 
--- prefixOptP :: O.Parser [String]
--- prefixOptP = do
-  -- s <- O.option O.str ( O.long "prefix" )
-  -- _todo
-  -- many (string "prefix")
-prefixP :: O.Parser [String]
+srcLangP :: O.Parser SourceLang
+srcLangP =
+  haskellLang <|> damlLang
+  where
+    haskellLang =
+      O.flag' Haskell $
+        O.long "haskell"
+        <> O.help "format haskell source"
+
+    damlLang =
+      O.flag' Daml $
+        O.long "daml"
+        <> O.help "format daml source"
+
+prefixP :: O.Parser [Text]
 prefixP =
-  map T.unpack . words <$>
+  words <$>
     (O.strOption $
       O.long "prefixes"
       <> O.value ""
@@ -75,41 +70,50 @@ importBorderBottomP =
     O.long "border-bottom"
     <> O.help "Display border at the end of import declarations"
 
-cliOpts :: O.Parser CliOpts
-cliOpts = CliOpts
+settingsP :: O.Parser Settings
+settingsP = Settings
   <$> inputP
+  <*> srcLangP
   <*> prefixP
   <*> importTitleP
   <*> importBorderTopP
   <*> importBorderBottomP
 
-
-
-
-opts :: O.ParserInfo CliOpts
-opts = O.info (cliOpts <**> O.helper)
-  ( O.fullDesc
+opts :: O.ParserInfo Settings
+opts = O.info (settingsP <**> O.helper)
+  $ O.fullDesc
   <> O.progDesc "format module header"
-  <> O.header "rejig - sort and format module header declarations" )
+  <> O.header "rejig - sort and format module header declarations"
 
 main :: IO ()
 main = do
-  options <- O.execParser opts
+  settings <- O.execParser opts
 
-  case _cliInputMethod options of
+  case _sInput settings of
     FileInput path -> do
       putStrLn . T.unpack =<< TIO.readFile path
     StdInput ->
-      putStrLn . T.unpack =<< TIO.getContents
+      -- putStrLn . T.unpack =<< TIO.getContents
+      runFormatter settings =<< TIO.getContents
+
+runFormatter :: Settings -> Text -> IO ()
+runFormatter settings content = do
+  putStrLn $
+    case runParser parseSourceP "test" content of
+      Left bundle -> errorBundlePretty bundle
+      Right res ->
+        render $
+          runReader (showPretty $ runReader (sortParsedSource res) settings) settings
 
 
 mkDefaultSettings :: IO Settings
 mkDefaultSettings =
   pure $
     Settings
-      { _ssrcLang = Haskell,
-        _sGroupByPrefix = ["DA.", "Rejig"],
-        _sDisplayGroupTitle = True
+      { _sInput = StdInput
+      , _ssrcLang = Haskell
+      , _sGroupByPrefix = ["DA.", "Rejig"]
+      , _sDisplayGroupTitle = not True
       , _sImportBorderTop = True
       , _sImportBorderBottom = True
       }
