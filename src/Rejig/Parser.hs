@@ -70,9 +70,9 @@ importDeclP = do
     ideclNameP :: Parser (Bool, QConId)
     ideclNameP =
       choice
-        [ try $ qual *> ((True,) <$> qconid),
-          try $ ((True,) <$> qconid) <* qual,
-          (False,) <$> qconid
+        [ try $ qual *> ((True,) <$> qconid)
+        , try $ ((True,) <$> qconid) <* qual
+        , (False,) <$> qconid
         ]
 
     ideclHidingP :: Parser (Maybe (Bool, [IE]))

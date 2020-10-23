@@ -9,7 +9,21 @@
 -}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
+-- flx 1
+-- aapple
+
+-- caddable
+
+{-| hi ther
+     smokey 2
+-}
+
+-- a
+-- y
 {-# LANGUAGE FlexibleInstances #-}
+
+-- apple
+-- 123
 
 -- NOTE(MH): We define 4 detail levels:
 -- -2: Omit all type information, kind annotations, package ids and location information.

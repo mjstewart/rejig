@@ -118,17 +118,8 @@ hasImportsPs :: SortedParsedSource -> Bool
 hasImportsPs =
   hasImports . _docThing . _ssrcModHeader
 
-instance Pretty SortedParsedSource where
-  showPretty x = do
-    settings <- ask
-
-    pure $ vcatSep
-     [ prettyVcat settings $ _ssrcGhcOpts x
-     , prettyVcat settings $ _ssrcLangExts x
-     , runReader' settings . showPretty $ _ssrcModHeader x
-     , if hasImportsPs x && _sImportBorderBottom settings then borderLine else empty
-     , ttext $ _ssrcRest x
-     ]
+prettyVcat :: Pretty a => Settings -> [a] -> Doc
+prettyVcat s = vcat . map (runReader' s . showPretty)
 
 {-| When printing comments, we need to preserve multiline comments while still
   identifiying single and block comments.
@@ -150,19 +141,28 @@ toCommentGroups settings =
     f (BlockComment _) (BlockComment _) = True
     f _ _ = False
 
+instance Pretty SortedParsedSource where
+  showPretty x = do
+    settings <- ask
+
+    pure $ vcatSep
+     [ prettyVcat settings $ _ssrcGhcOpts x
+     , prettyVcat settings $ _ssrcLangExts x
+     , runReader' settings . showPretty $ _ssrcModHeader x
+     , if hasImportsPs x && _sImportBorderBottom settings then borderLine else empty
+     , ttext $ _ssrcRest x
+     ]
+
 instance (Pretty a) => Pretty (DocString a) where
   showPretty x = do
     settings <- ask
 
-    -- comment sticks to its next top level decl
+    -- final comment in group sticks to its next top level decl
     pure $
       vcat [
         toCommentGroups settings $ _docComments x
       , runReader' settings . showPretty $ _docThing x
       ]
-
-prettyVcat :: Pretty a => Settings -> [a] -> Doc
-prettyVcat s = vcat . map (runReader' s . showPretty)
 
 instance Pretty Comment where
   showPretty = \case
