@@ -9,7 +9,6 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Prelude hiding (many, some)
-import Text.Megaparsec.Debug (dbg)
 
 {-| This file contains all the lexing primitives to parse import/export declarations by using
   https://www.haskell.org/onlinereport/syntax-iso.html
@@ -97,28 +96,10 @@ ascSymbols =
     '~'
   ]
 
-lineComment :: Parser ()
-lineComment =
-  L.skipLineComment "--"
-
-blockComment :: Parser ()
-blockComment =
-  L.skipBlockComment "{-" "-}"
-
--- | newline space consumer that skips comments
+-- | newline space consumer that doesnt skip comments
 scn :: Parser ()
 scn =
-  L.space space1 lineComment blockComment
-
--- | newline space consumer that doesnt skip comments
-scnComment :: Parser ()
-scnComment =
   L.space space1 empty empty
-
--- | literal space consumer that skips comments
-sc :: Parser ()
-sc =
-  L.space (void $ takeWhile1P Nothing (== ' ')) lineComment blockComment
 
 -- | literal space consumer that doesnt skip comments
 sce :: Parser ()
@@ -126,18 +107,12 @@ sce =
   L.space (void $ takeWhile1P Nothing (== ' ')) empty empty
 
 -- | symbol with newline space consumer that doesnt skip comments
-symbolComment :: Text -> Parser Text
-symbolComment = L.symbol scnComment
-
--- | lexeme with newline space consumer that doesnt skip comments
-lexemeComment :: Parser a -> Parser a
-lexemeComment = L.lexeme scnComment
-
-lexeme :: Parser a -> Parser a
-lexeme = L.lexeme scn
-
 symbol :: Text -> Parser Text
 symbol = L.symbol scn
+
+-- | lexeme with newline space consumer that doesnt skip comments
+lexeme :: Parser a -> Parser a
+lexeme = L.lexeme scn
 
 comma :: Parser ()
 comma =
@@ -151,7 +126,7 @@ parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
 pragma :: Parser a -> Parser a
-pragma = between (symbolComment "{-#") (symbolComment "#-}")
+pragma = between (symbol "{-#") (symbol "#-}")
 
 takeTillNewLine :: Parser Text
 takeTillNewLine =
@@ -160,7 +135,7 @@ takeTillNewLine =
 -- ends with a new line and consumes all space up until the next potential comment
 singleLineCommentP :: Parser Text
 singleLineCommentP =
-  (symbolComment "--" *> takeTillNewLine) <* newline <* sce
+  (symbol "--" *> takeTillNewLine) <* newline <* sce
 
 -- collects the inner contents of a {- block comment -}
 blockCommentP :: Parser Comment
@@ -321,7 +296,6 @@ isModId =
   , try consym
   , try varsym
   ]
-
 
 -- | [ modid . ] varid
 qvarid :: Parser QVarId

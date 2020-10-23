@@ -1,32 +1,57 @@
--- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
--- SPDX-License-Identifier: Apache-2.0
-
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RankNTypes #-}
 
-module DA.Daml.LF.Ast.Optics
-  ( _PRSelfModule
-  , builtinType
-  , dataConsType
-  , exprPartyLiteral
-  , exprValueRef
-  , moduleExpr
-  , moduleModuleRef
-  , packageRefs
-  , templateExpr
-  , typeModuleRef
-  , unlocate
-  , ModuleRef
+module DA.Daml.LF.Ast.Pretty
+  ( map
+  , (<##>)
+  , (<:>)
   )
 where
 
-unlocate :: Prism' Expr a -> Prism' Expr a
-unlocate p = prism inj proj
-  where
-    inj x = p # x
-    proj e = case matching p (e ^. rightSpine _ELocation . _2) of
-      Left _ -> Left e
-      Right x -> Right x
+--------------------------------------------------------------------------------
+
+-- standard imports
+
+import Control.Lens
+
+import Control.Lens.Ast
+  ( rightSpine
+  )
+import Data.Foldable
+  ( toList
+  )
+
+import qualified Data.NameMap as NM
+import qualified Data.Ratio as Ratio
+import qualified Data.Text as T
+import qualified Data.Time.Clock.POSIX as Clock.Posix
+import qualified Data.Time.Format as Time.Format
+
+-- imports by DA.*
+
+import DA.Daml.LF.Ast.Optics
+import DA.Daml.LF.Ast.TypeLevelNat
+import DA.Daml.LF.Ast.Util
+
+import DA.Daml.LF.Ast.Base hiding
+  ( dataCons
+  )
+import DA.Pretty hiding
+  ( keyword_
+  , pretty
+  , type_
+  )
+
+--------------------------------------------------------------------------------
+
+-- NOTE(MH): We define 4 detail levels:
+-- -2: Omit all type information, kind annotations, package ids and location information.
+-- -1: Omit all package ids and all location information.
+-- 0 (default): Omit all location information.
+-- 1: Print everything.
+levelHasTypes, levelHasKinds, levelHasPackageIds, levelHasLocations :: PrettyLevel -> Bool
+levelHasTypes lvl = lvl >= PrettyLevel (-1)
+levelHasKinds lvl = lvl >= PrettyLevel (-1)
+levelHasPackageIds lvl = lvl >= PrettyLevel 0
+levelHasLocations lvl = lvl >= PrettyLevel 1

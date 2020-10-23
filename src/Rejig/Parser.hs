@@ -111,9 +111,9 @@ leadingCommentedThingP p = do
   where
     leadingCommentsP :: Parser [Comment]
     leadingCommentsP =
-      scnComment *> (many $
+      scn *> (many $
         choice [
           try $ SingleLineComment <$> singleLineCommentP
-        , try $ CommentNewLine <$ (lexemeComment newline)
+        , try $ CommentNewLine <$ (lexeme newline)
         , try $ blockCommentP
         ])

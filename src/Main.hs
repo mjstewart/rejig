@@ -117,9 +117,9 @@ mkDefaultSettings =
       { _sInput = StdInput "demo"
       , _ssrcLang = Haskell
       , _sPrefixGroups = ["DA.", "DA.Finance", "Test", "Rejig", "Danban"]
-      , _sDisplayGroupTitle = not True
-      , _sImportBorderTop = not True
-      , _sImportBorderBottom = not True
+      , _sDisplayGroupTitle = True
+      , _sImportBorderTop = True
+      , _sImportBorderBottom = True
       }
 
 -- runPrettyRender :: Pretty a => Settings -> a -> String

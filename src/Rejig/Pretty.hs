@@ -61,12 +61,11 @@ paddedBorderLine =
 layoutVerticalIEs :: Settings -> Bool -> [IE] -> Doc
 layoutVerticalIEs settings export = \case
   [] -> if export then empty else parens empty
-  [x] -> parens $ runReader (showPretty x) settings
   (x : xs) ->
     vcat
-      [ lparen <+> runReader (showPretty x) settings,
-        vcat $ map ((comma <+>) . runReader' settings . showPretty) xs,
-        rparen
+      [ lparen <+> runReader (showPretty x) settings
+      , vcat $ map ((comma <+>) . runReader' settings . showPretty) xs
+      , rparen
       ]
 
 -- | surround package qualifier in quotes
