@@ -12,7 +12,9 @@ data SourceLang
 
 data Input
   = FileInput FilePath
-  | StdInput
+  | StdInput String
+  -- ^ Additional text is to help with any error reporting to describe
+  -- what the input is associated to, eg file name.
    deriving (Show, Eq)
 
 data Settings = Settings

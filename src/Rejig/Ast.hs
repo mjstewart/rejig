@@ -176,8 +176,8 @@ instance Ord IE where
 
 -- Initial parse result
 data ModuleHeader = ModuleHeader
-  { _modLangExts :: [LangExt]
-  , _modGhcOpts :: [GhcOption]
+  { _modGhcOpts :: [GhcOption]
+  , _modLangExts :: [LangExt]
   , _modName :: QConId
   , _modExports :: [IE]
   , _modImports :: ImportDecls

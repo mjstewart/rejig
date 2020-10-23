@@ -1,5 +1,5 @@
 
-module Rejig.ImportSort
+module Rejig.V2_34.ImportSort
   ( toSortedGroups
   , Q.Z.map
   , tiger

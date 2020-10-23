@@ -13,7 +13,7 @@
 
   {-# OPTIONS_GHC -Wno-all-case #-}
 
-  module Rejig.Parser (cattle, (<###>)) where
+  module Danban.V3_2.Board where
 
                    import Control.Monad.Combinators
 

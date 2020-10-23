@@ -1,0 +1,81 @@
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
+module Danban.V3_2.BoardVj
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
+
+import Daml.Script
+
+import Prelude hiding (submit)
+
+-- imports by DA*
+
+import DA.Action
+import DA.Assert
+import DA.Either
+import DA.List
+import DA.Next.Set
+
+import DA.Date as D
+import DA.List as List
+import DA.Next.Map as Map
+import DA.Next.Set as Set
+
+import DA.Foldable hiding
+  ( all
+  , and
+  )
+import DA.Optional hiding
+  ( catOptionals
+  , fromSomeNote
+  )
+
+import DA.Optional.Total (fromSomeNote)
+
+-- imports by DA.Finance*
+
+import DA.Finance.Asset
+import DA.Finance.Asset.Settlement
+import DA.Finance.Base.RollConvention
+import DA.Finance.Instrument.Equity.CashDividend
+import DA.Finance.Instrument.Equity.StockSplit
+import DA.Finance.Trade.Dvp
+import DA.Finance.Trade.Dvp.Settlement
+import DA.Finance.Trade.SettlementInstruction
+import DA.Finance.Types
+import DA.Finance.Utils
+
+-- imports by Test*
+
+import Test.Finance.Market.Asset
+import Test.Finance.Market.Dvp
+import Test.Finance.Market.Instrument
+import Test.Finance.Market.Party
+import Test.Finance.Utils
+import Test.StartupScript
+
+-- imports by Danban*
+
+import Danban.V3_2.Util
+
+import Danban.V3_2.Board qualified as Board
+import Danban.V3_2.User qualified as User
+
+--------------------------------------------------------------------------------
+
+move : Int -> Int -> [a] -> [a]
+move oldIdx newIdx xs =
+  let lowIdx = min oldIdx newIdx
+      highIdx = max oldIdx newIdx
+      (s1, r) = splitAt lowIdx xs
+      (s2, s3) = splitAt (highIdx - lowIdx) r
+      (s2', s3') = if oldIdx < newIdx
+        then (tail s2, head s3 :: head s2 :: tail s3)
+        else (head s3 :: s2, tail s3)
+  in s1 ++ s2' ++ s3'

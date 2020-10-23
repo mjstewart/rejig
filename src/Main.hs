@@ -8,7 +8,6 @@ import Rejig.Settings
 import Text.Megaparsec
 import Text.PrettyPrint (render)
 import qualified Options.Applicative as O
-import System.FilePath (splitExtension)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -23,9 +22,11 @@ fileInput =
 
 stdInput :: O.Parser Input
 stdInput =
-  O.flag' StdInput $
+ StdInput <$>
+   (O.strOption $
     O.long "stdin"
-    <> O.help "read from stdin"
+    <> O.metavar "DESCRIPTION"
+    <> O.help "read using stdin including an input source description")
 
 inputP :: O.Parser Input
 inputP = fileInput <|> stdInput
@@ -50,7 +51,8 @@ prefixP =
     (O.strOption $
       O.long "prefixes"
       <> O.value ""
-      <> O.help "import names beginning with matching prefixes are grouped together (separate by whitespace)")
+      <> O.metavar "ARG1 ARG2 ..."
+      <> O.help "import names beginning with matching prefixes are grouped together. Provide from least to most specific order")
 
 importTitleP :: O.Parser Bool
 importTitleP =
@@ -91,31 +93,33 @@ main = do
 
   case _sInput settings of
     FileInput path -> do
-      putStrLn . T.unpack =<< TIO.readFile path
-    StdInput ->
-      -- putStrLn . T.unpack =<< TIO.getContents
-      runFormatter settings =<< TIO.getContents
+      runFormatter path settings =<< TIO.readFile path
+    StdInput description ->
+      runFormatter description settings =<< TIO.getContents
 
-runFormatter :: Settings -> Text -> IO ()
-runFormatter settings content = do
+runFormatter :: String -> Settings -> Text -> IO ()
+runFormatter description settings content = do
   putStrLn $
-    case runParser parseSourceP "<dynamic>" content of
-      Left bundle -> errorBundlePretty bundle
+    case runParser parseSourceP description content of
+      Left bundle -> toResponse "error" $ errorBundlePretty bundle
       Right res ->
-        render $
+        toResponse "ok" $ render $
           runReader (showPretty $ runReader (sortParsedSource res) settings) settings
 
+toResponse :: String -> String -> String
+toResponse status body =
+  "{ \"status\": " <> show status <> ", \"data\": " <> show body <> "}"
 
 mkDefaultSettings :: IO Settings
 mkDefaultSettings =
   pure $
     Settings
-      { _sInput = StdInput
+      { _sInput = StdInput "demo"
       , _ssrcLang = Haskell
-      , _sPrefixGroups = ["DA.", "Rejig"]
+      , _sPrefixGroups = ["DA.", "DA.Finance", "Test", "Rejig", "Danban"]
       , _sDisplayGroupTitle = not True
-      , _sImportBorderTop = True
-      , _sImportBorderBottom = True
+      , _sImportBorderTop = not True
+      , _sImportBorderBottom = not True
       }
 
 -- runPrettyRender :: Pretty a => Settings -> a -> String

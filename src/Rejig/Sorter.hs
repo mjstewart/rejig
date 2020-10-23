@@ -97,12 +97,13 @@ byPrefixPartition :: [ImportDecl] -> Reader Settings ([CG [[ImportDecl]]], [Impo
 byPrefixPartition decls = do
   settings <- ask
   pure $
-    foldr
-      ( \prefix (acc, rest) ->
-          first (mergeTargets prefix acc) $ L.partition (T.isPrefixOf prefix . declName settings) rest
-      )
-      ([], decls)
-      $ _sPrefixGroups settings
+    sortByTitle $
+      foldr
+        (\prefix (acc, rest) ->
+            first (mergeTargets prefix acc) $ L.partition (T.isPrefixOf prefix . declName settings) rest
+        )
+        ([], decls)
+        $ _sPrefixGroups settings
   where
     declName :: Settings -> ImportDecl -> Text
     declName settings = T.pack . renderPretty settings . ideclName
@@ -117,6 +118,10 @@ byPrefixPartition decls = do
               _cgGroup = [targets]
             } :
           acc
+
+    sortByTitle :: ([CG [[ImportDecl]]], [ImportDecl]) -> ([CG [[ImportDecl]]], [ImportDecl])
+    sortByTitle =
+      first $ L.sortBy (by (maybe "" id . _cgComment))
 
 sortTopLevel :: [[ImportDecl]] -> [[ImportDecl]]
 sortTopLevel decls =

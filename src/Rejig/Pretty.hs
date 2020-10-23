@@ -48,15 +48,19 @@ borderLine =
   where
     lineLength = 80
 
+paddedBorderLine :: Doc
+paddedBorderLine =
+  newline $$ borderLine $$ newline
+
 {-|
   import A.B as C
     ( hello      <- handles layout for this section
     , world
     )
 -}
-layoutVerticalIEs :: Settings -> [IE] -> Doc
-layoutVerticalIEs settings = \case
-  [] -> empty
+layoutVerticalIEs :: Settings -> Bool -> [IE] -> Doc
+layoutVerticalIEs settings export = \case
+  [] -> if export then empty else parens empty
   [x] -> parens $ runReader (showPretty x) settings
   (x : xs) ->
     vcat
@@ -91,7 +95,7 @@ prettyHiding settings x =
   case ideclHiding x of
     Nothing -> empty
     Just (_, ies) ->
-      layoutVerticalIEs settings ies
+      layoutVerticalIEs settings False ies
 
 prettyAs :: Settings -> ImportDecl -> Doc
 prettyAs settings =
@@ -102,13 +106,26 @@ vcatSep:: [Doc] -> Doc
 vcatSep =
   vcat . intersperse newline . filter (not . isEmpty)
 
+hasImports :: SortedModuleHeader -> Bool
+hasImports mh =
+  rest || prefixes || pkgQuals
+  where
+    pi = _smodImports mh
+    rest = not . null . unImportDeclGroups . _cgGroup $ _piRest pi
+    prefixes = not . null $ _piPrefixTargets pi
+    pkgQuals = not . null . unImportDeclGroups . _cgGroup $ _piPkgQuals pi
+
+hasImportsPs :: SortedParsedSource -> Bool
+hasImportsPs =
+  hasImports . _leadingThing . _ssrcModHeader
+
 instance Pretty SortedParsedSource where
   showPretty x = do
     settings <- ask
 
     pure $ vcatSep
      [ runReader' settings . showPretty $ _ssrcModHeader x
-     , if _sImportBorderBottom settings then borderLine else empty
+     , if hasImportsPs x && _sImportBorderBottom settings then borderLine else empty
      , ttext $ _ssrcRest x
      ]
 
@@ -120,7 +137,7 @@ instance Pretty SortedParsedSource where
   [SingleLineComment, SingleLineComment, CommentNewLine, BlockComment]
 
   The `CommentNewLine` constructor is a flag to represent the end of comment
-  group which we insert a new line between.
+  group where we insert a new line between.
 -}
 toCommentGroups :: Settings -> [Comment] -> Doc
 toCommentGroups settings =
@@ -141,7 +158,6 @@ instance (Pretty a) => Pretty (LeadingCommentedThing a) where
         toCommentGroups settings $ _leadingComments x
       , runReader' settings . showPretty $ _leadingThing x
       ]
-
 
 prettyVcat :: Pretty a => Settings -> [a] -> Doc
 prettyVcat s = vcat . map (runReader' s . showPretty)
@@ -164,8 +180,8 @@ instance Pretty SortedModuleHeader where
     settings <- ask
 
     pure $ vcatSep [
-        prettyVcat settings $ _smodLangExts x
-      , prettyVcat settings $ _smodGhcOpts x
+        prettyVcat settings $ _smodGhcOpts x
+      , prettyVcat settings $ _smodLangExts x
       , vcat
           [ hang
             ( hsep
@@ -174,9 +190,11 @@ instance Pretty SortedModuleHeader where
                 ]
             )
             2
-            $ layoutVerticalIEs settings $ _smodExports x
+            $ layoutVerticalIEs settings True $ _smodExports x
           , text "where"
-          , if _sImportBorderTop settings then newline $$ borderLine $$ newline else newline
+          , if hasImports x then
+              if _sImportBorderTop settings then newline $$ borderLine $$ newline else newline
+            else empty
           , runReader' settings . showPretty $ _smodImports x
           ]
       ]
@@ -193,7 +211,7 @@ instance Pretty PartitionedImports where
     liftA3
       (\a b c -> vcatSep [a, b, c])
       (prettyCG $ _piRest x)
-      (vcat <$> (mapM prettyCG $ _piPrefixTargets x))
+      (vcatSep <$> (mapM prettyCG $ _piPrefixTargets x))
       (prettyCG $ _piPkgQuals x)
 
 {-| An optional title is included if the setting is enabled

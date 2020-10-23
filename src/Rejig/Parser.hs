@@ -79,8 +79,8 @@ importDeclP = do
     ideclHidingP =
       optional $
         choice
-          [ try (keyword "hiding") *> ((True,) <$> ieP),
-            (False,) <$> ieP
+          [ try (keyword "hiding") *> ((True,) <$> ieP)
+          , (False,) <$> ieP
           ]
 
     qual = keyword "qualified"
@@ -91,8 +91,8 @@ importsP =
 
 modHeaderP :: Parser ModuleHeader
 modHeaderP = do
-  _modLangExts <- many $ try langExtP
   _modGhcOpts <- many $ try ghcOptionP
+  _modLangExts <- many $ try langExtP
   _modName <- keyword "module" *> qconid
   _modExports <- (ieP <|> pure []) <* keyword "where"
   _modImports <- importsP

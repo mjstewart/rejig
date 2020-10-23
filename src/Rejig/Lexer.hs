@@ -1,15 +1,15 @@
 module Rejig.Lexer where
 
 import Control.Monad.Combinators
-import Rejig.Lang ( applyOr, postValidate, Parser )
+import Rejig.Lang ( postValidate, Parser )
 import Rejig.Ast
-import qualified Data.Char as Char
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Prelude hiding (many, some)
+import Text.Megaparsec.Debug (dbg)
 
 {-| This file contains all the lexing primitives to parse import/export declarations by using
   https://www.haskell.org/onlinereport/syntax-iso.html
@@ -177,6 +177,10 @@ stringLit :: Parser Text
 stringLit =
   lexeme $ char '"' >> T.pack <$> manyTill L.charLiteral (char '"')
 
+tick :: Parser Char
+tick =
+  char '\''
+
 small :: Parser Char
 small =
   lowerChar <|> char '_'
@@ -185,8 +189,8 @@ large :: Parser Char
 large =
   upperChar
 
-wrap :: Text -> Text
-wrap x = "(" <> x <> ")"
+wrapParens :: Text -> Text
+wrapParens x = "(" <> x <> ")"
 
 ascSymbol :: Parser Char
 ascSymbol =
@@ -203,7 +207,7 @@ sym :: Parser Char
 sym =
   postValidate check parser
   where
-    parser = ascSymbol <|> symbolChar <|> punctuationChar
+    parser = try ascSymbol <|> try symbolChar <|> punctuationChar
     specialSyms = Set.union special $ Set.fromList ['_', ':', '\"', '\'']
 
     check result =
@@ -216,9 +220,16 @@ varid :: Parser Text
 varid =
   postValidate check parser
   where
-    parser = lexeme $ T.cons <$> small <*> takeWhileP Nothing body
+    parser = lexeme $ T.cons <$> small <*> body
 
-    body = applyOr [Char.isLower, Char.isUpper, Char.isDigit, (== '\'')]
+    body :: Parser Text
+    body = many
+      (choice [
+        small
+      , large
+      , digitChar
+      , tick
+      ]) <&> T.pack
 
     check result =
       if Set.member result reservedId
@@ -228,9 +239,16 @@ varid =
 -- | large {small | large | digit | ' }
 conid :: Parser Text
 conid =
-  lexeme $ T.cons <$> large <*> takeWhileP Nothing body
+  lexeme $ T.cons <$> large <*> body
   where
-    body = applyOr [Char.isLower, Char.isUpper, Char.isDigit, (== '\'')]
+    body :: Parser Text
+    body = many
+      (choice [
+        small
+      , large
+      , digitChar
+      , tick
+      ]) <&> T.pack
 
 -- | ( symbol {symbol | :})<reservedop | dashes>
 -- dashes implicitly ignored since lexeme/symbol space consumer ignores them
@@ -238,8 +256,8 @@ varsym :: Parser Text
 varsym =
   postValidate check parser
   where
-    parser = lexeme $ wrap <$> (parens $ lexeme (T.cons <$> sym <*> body))
-    body = T.pack <$> many (try sym) <|> show <$> char ':'
+    parser = lexeme $ wrapParens <$> (parens $ lexeme (T.cons <$> sym <*> body))
+    body = T.pack <$> many (try sym <|> char ':')
 
     check result =
       if Set.member result reservedOp
@@ -251,8 +269,8 @@ consym :: Parser Text
 consym =
   postValidate check parser
   where
-    parser = lexeme $ wrap <$> (parens $ lexeme (T.cons <$> char ':' <*> body))
-    body = T.pack <$> (many $ try sym <|> char ':')
+    parser = lexeme $ wrapParens <$> (parens $ lexeme (T.cons <$> char ':' <*> body))
+    body = T.pack <$> many (try sym <|> char ':')
 
     check result =
       if Set.member result reservedOp
@@ -272,7 +290,8 @@ modid :: Parser ConId
 modid = ConId <$> conid
 
 {-| This parser is abit involved due to the last element being a different lexeme type.
-  Eg. A B C use the same parser, but ??? can be something else.
+  Eg. The section [A, B, C] use the same parser since these are the qualified conids,
+  but ??? can be something else like a varid.
 
   A.B.C.???
 
@@ -281,14 +300,28 @@ modid = ConId <$> conid
  -}
 modids :: Parser Text -> Parser Qual
 modids endP = do
-  segmentCount <- (dec . length) <$> (lookAhead $ word `sepBy` dot)
-  Qual <$> (count segmentCount $ modid <* dot) <*> endP
-  where
-    dec x = x - 1
+  qualifiedDots <- lookAhead $ length <$> isModId `sepBy` dot
+  Qual
+    <$> count (qualifiedDots - 1) (modid <* dot)
+    <*> endP
 
-    word :: Parser Text
-    word =
-      T.pack <$> many letterChar
+{-
+  qvarid -> [ modid . ] varid
+  qconid -> [ modid . ] conid
+  qtycon -> [ modid . ] tycon
+  qtycls -> [ modid . ] tycls
+  qvarsym -> [ modid . ] varsym
+  qconsym -> [ modid . ] consym
+-}
+isModId :: Parser ()
+isModId =
+  void $ choice [
+    try conid
+  , try varid
+  , try consym
+  , try varsym
+  ]
+
 
 -- | [ modid . ] varid
 qvarid :: Parser QVarId
