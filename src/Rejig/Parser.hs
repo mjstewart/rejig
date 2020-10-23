@@ -91,8 +91,6 @@ importsP =
 
 modHeaderP :: Parser ModuleHeader
 modHeaderP = do
-  _modGhcOpts <- many $ try ghcOptionP
-  _modLangExts <- many $ try langExtP
   _modName <- keyword "module" *> qconid
   _modExports <- (ieP <|> pure []) <* keyword "where"
   _modImports <- importsP
@@ -100,14 +98,16 @@ modHeaderP = do
 
 parseSourceP :: Parser ParsedSource
 parseSourceP = do
-  _srcModHeader <- leadingCommentedThingP modHeaderP
+  _srcGhcOpts <- many $ try $ docsP ghcOptionP
+  _srcLangExts <- many $ try $ docsP langExtP
+  _srcModHeader <- docsP modHeaderP
   _srcRest <- T.pack <$> (manyTill anySingle eof)
   pure $ ParsedSource {..}
 
 -- | Collects any comments that occur before `p`.
-leadingCommentedThingP :: Parser a -> Parser (LeadingCommentedThing a)
-leadingCommentedThingP p = do
-  LeadingCommentedThing <$> leadingCommentsP <*> p
+docsP :: Parser a -> Parser (DocString a)
+docsP p = do
+  DocString <$> leadingCommentsP <*> p
   where
     leadingCommentsP :: Parser [Comment]
     leadingCommentsP =

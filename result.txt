@@ -1,7 +1,19 @@
+-- line1 a
+-- line2 a
+
+-- line1 b
+
+{- block
+
+      comment in here
+-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 {-# LANGUAGE FlexibleInstances #-}
 
+-- NOTE(MH): We define 4 detail levels:
+-- -2: Omit all type information, kind annotations, package ids and location information.
+-- -1: Omit all package ids and all location information.
 module DA.Daml.LF.Ast.Pretty
   ( map
   , (<##>)

@@ -136,14 +136,14 @@ modHeaderP = do
 
 parseSourceP :: Parser ParsedSource
 parseSourceP = do
-  _srcModHeader <- leadingCommentedThingP modHeaderP
+  _srcModHeader <- docsP modHeaderP
   _srcRest <- T.pack <$> (manyTill anySingle eof)
   pure $ ParsedSource {..}
 
 -- | Collects any comments that occur before `p`.
-leadingCommentedThingP :: Parser a -> Parser (LeadingCommentedThing a)
-leadingCommentedThingP p = do
-  LeadingCommentedThing <$> leadingCommentsP <*> p
+docsP :: Parser a -> Parser (DocString a)
+docsP p = do
+  DocString <$> leadingCommentsP <*> p
   where
     leadingCommentsP :: Parser [Comment]
     leadingCommentsP =

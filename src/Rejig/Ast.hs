@@ -17,10 +17,14 @@ data Comment
     deriving (Show, Eq)
 
 -- ^ Represents source code that begins with a leading comment then something else.
-data LeadingCommentedThing a = LeadingCommentedThing
- { _leadingComments :: [Comment]
- , _leadingThing :: a
+data DocString a = DocString
+ { _docComments :: [Comment]
+ , _docThing :: a
  } deriving (Show, Eq, Functor)
+
+instance (Ord a) => Ord (DocString a) where
+  compare a b =
+    compare (_docThing a) (_docThing b)
 
 -- {-# LANGUAGE <Extension> #-}
 newtype LangExt = LangExt {unLangExt :: Text}
@@ -176,32 +180,32 @@ instance Ord IE where
 
 -- Initial parse result
 data ModuleHeader = ModuleHeader
-  { _modGhcOpts :: [GhcOption]
-  , _modLangExts :: [LangExt]
-  , _modName :: QConId
+  { _modName :: QConId
   , _modExports :: [IE]
   , _modImports :: ImportDecls
   }
   deriving (Show, Eq)
 
 data SortedModuleHeader = SortedModuleHeader
-  { _smodLangExts :: [LangExt]
-  , _smodGhcOpts :: [GhcOption]
-  , _smodName :: QConId
+  { _smodName :: QConId
   , _smodExports :: [IE]
   , _smodImports :: PartitionedImports
   }
   deriving (Show, Eq)
 
 data ParsedSource = ParsedSource
- { _srcModHeader :: LeadingCommentedThing ModuleHeader
- , _srcRest :: Text
+ {  _srcGhcOpts :: [DocString GhcOption]
+  , _srcLangExts :: [DocString LangExt]
+  , _srcModHeader :: DocString ModuleHeader
+  , _srcRest :: Text
  }
   deriving (Show, Eq)
 
 -- This tool only formats the mod header, the rest of the source code remains untouched
 data SortedParsedSource = SortedParsedSource
- { _ssrcModHeader :: LeadingCommentedThing SortedModuleHeader
+ { _ssrcGhcOpts :: [DocString GhcOption]
+ , _ssrcLangExts :: [DocString LangExt]
+ , _ssrcModHeader :: DocString SortedModuleHeader
  , _ssrcRest :: Text
  }
   deriving (Show, Eq)

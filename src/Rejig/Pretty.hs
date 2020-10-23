@@ -116,14 +116,16 @@ hasImports mh =
 
 hasImportsPs :: SortedParsedSource -> Bool
 hasImportsPs =
-  hasImports . _leadingThing . _ssrcModHeader
+  hasImports . _docThing . _ssrcModHeader
 
 instance Pretty SortedParsedSource where
   showPretty x = do
     settings <- ask
 
     pure $ vcatSep
-     [ runReader' settings . showPretty $ _ssrcModHeader x
+     [ prettyVcat settings $ _ssrcGhcOpts x
+     , prettyVcat settings $ _ssrcLangExts x
+     , runReader' settings . showPretty $ _ssrcModHeader x
      , if hasImportsPs x && _sImportBorderBottom settings then borderLine else empty
      , ttext $ _ssrcRest x
      ]
@@ -148,14 +150,15 @@ toCommentGroups settings =
     f (BlockComment _) (BlockComment _) = True
     f _ _ = False
 
-instance (Pretty a) => Pretty (LeadingCommentedThing a) where
+instance (Pretty a) => Pretty (DocString a) where
   showPretty x = do
     settings <- ask
 
+    -- comment sticks to its next top level decl
     pure $
-      vcatSep [
-        toCommentGroups settings $ _leadingComments x
-      , runReader' settings . showPretty $ _leadingThing x
+      vcat [
+        toCommentGroups settings $ _docComments x
+      , runReader' settings . showPretty $ _docThing x
       ]
 
 prettyVcat :: Pretty a => Settings -> [a] -> Doc
@@ -178,25 +181,22 @@ instance Pretty SortedModuleHeader where
   showPretty x = do
     settings <- ask
 
-    pure $ vcatSep [
-        prettyVcat settings $ _smodGhcOpts x
-      , prettyVcat settings $ _smodLangExts x
-      , vcat
-          [ hang
-            ( hsep
-                [ text "module"
-                , runReader' settings . showPretty $ _smodName x
-                ]
-            )
-            2
-            $ layoutVerticalIEs settings True $ _smodExports x
-          , text "where"
-          , if hasImports x then
-              if _sImportBorderTop settings then newline $$ borderLine $$ newline else newline
-            else empty
-          , runReader' settings . showPretty $ _smodImports x
-          ]
-      ]
+    pure $
+      vcat
+        [ hang
+          ( hsep
+              [ text "module"
+              , runReader' settings . showPretty $ _smodName x
+              ]
+          )
+          2
+          $ layoutVerticalIEs settings True $ _smodExports x
+        , text "where"
+        , if hasImports x then
+            if _sImportBorderTop settings then newline $$ borderLine $$ newline else newline
+          else empty
+        , runReader' settings . showPretty $ _smodImports x
+        ]
 
 {-| Layout structure for import decls
 

@@ -29,10 +29,12 @@ renderPretty settings =
 -- | Main entry point to sorting the module header of the parsed source file
 sortParsedSource :: ParsedSource -> Reader Settings SortedParsedSource
 sortParsedSource ps = do
-  _ssrcModHeader <- sortModHeader $ _leadingThing $ _srcModHeader ps
+  _ssrcModHeader <- sortModHeader $ _docThing $ _srcModHeader ps
 
   pure $ SortedParsedSource
-   { _ssrcModHeader = const _ssrcModHeader <$> (_srcModHeader ps)
+   { _ssrcLangExts = sort $ _srcLangExts ps
+   , _ssrcGhcOpts = sort $ _srcGhcOpts ps
+   , _ssrcModHeader = const _ssrcModHeader <$> (_srcModHeader ps)
    , _ssrcRest = _srcRest ps
    }
 
@@ -42,9 +44,7 @@ sortModHeader mh = do
   sortedExports <- sortExports $ _modExports mh
 
   pure $ SortedModuleHeader
-    { _smodLangExts = sort $ _modLangExts mh
-    , _smodGhcOpts = sort $ _modGhcOpts mh
-    , _smodName = _modName mh
+    { _smodName = _modName mh
     , _smodExports = sortedExports
     , _smodImports = sortedImports
     }
