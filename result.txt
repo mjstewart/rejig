@@ -1,326 +1,82 @@
-module Rejig.V2_34.ImportSort
-  ( apple
-  , cat
-  , tiger
-  , toSortedGroups
-  , A.B.C.egg
-  , A.B.C.manifold
-  , A.B.fold
-  , A.T.cat
-  , Q.Z.map
-  , Alice
-  , Bob
-  , Claire
-  , Apple (..)
-  , Cattle (..)
-  , Kettle (..)
-  , Kite (..)
-  , Dog
-  , Bag.Unite
-      ( C.Fish
-      )
-  , Cal.Month
-      ( A.B.CDec
-      , App.Abbs
-      , App.Aug
-      , Bal.Cal.Bag
-      , Bal.Cal.Feb
-      , Cal.Jan
-      , Lang.Nov
-      , Z.Aggr
-      , Z.Apr
-      )
-  , Month
-      ( Apr
-      , Aug
-      , Dec
-      , Feb
-      , Jan
-      , Nov
-      )
-  , Speed
-      ( app
-      , date
-      , mapple
-      , (<***>)
-      , (<|||>)
-      , High
-      , Med
-      , Slow
-      )
-  , module Cat
-  , module Cat.Apple.Accord
-  , module Cat.Apple.Banana
-  , module Cat.Dog.Y
-  )
+-- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
+
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
+module Danban.V3_2.BoardVj
 where
 
 --------------------------------------------------------------------------------
 
 -- standard imports
 
-import Data.Applicative.Hello
-import Data.List
+import Daml.Script
+import Daml.Trigger
 
-import Apple ()
-import Bat ()
-import Data.Apple ()
-import Data.Monad ()
-import Data.Query.Lang ()
-import Data.Text ()
-import Zoo ()
+import Prelude hiding (submit)
 
-import Data.Apple.Cat as Cat.Dog.Me
-import Data.List as L
-import Data.List3 as Li.Matt
+-- imports by DA*
 
-import qualified Data.Applicative.Hello
-import qualified Data.List
+import DA.Action (when, replicateA, (<=<))
+import DA.Assert (===)
+import DA.Either qualified as E
+import DA.List qualified as L
+import DA.Next.Set (Set)
+import DA.Next.Set qualified as S
 
-import qualified Data.Apple.Cat1 as Cat.Dog.Me1
-import qualified Data.Apple.Cat2 as Cat.Dog.Me2
-import qualified Data.Applicative as App
-import qualified Data.Applicative.C as B
+import DA.Date as D
+import DA.Next.Map (Map)
+import DA.Next.Map qualified as Map
 
-import qualified Data.App.Apple.Hide as Hi hiding
-  ( acting
-  , actor
-  , ant
-  , any
-  , ba
-  , bandaid
-  , bed
-  , dog
-  , zoo
-  , (!<!>!)
-  , (<<<=)
-  , Queue
-  , Apple (..)
-  , Bart (..)
-  , Year (..)
-  , Month
-      ( Apr
-      , Aug
-      , Feb
-      , Jan
-      , Mar
-      )
+import DA.Foldable hiding
+  ( all
+  , and
   )
-import qualified Data.Test.Queue as A hiding
-  ( ap
-  , d
-  , e
+import DA.Optional hiding
+  ( catOptionals
+  , fromSomeNote
   )
 
-import qualified Data.App.Apple as A
-  ( acting
-  , actor
-  , ant
-  , any
-  , ba
-  , bandaid
-  , bed
-  , dog
-  , zoo
-  , (!<!>!)
-  , (<<<=)
-  , Queue
-  , Apple (..)
-  , Bart (..)
-  , Year (..)
-  , Month
-      ( Apr
-      , Aug
-      , Feb
-      , Jan
-      , Mar
-      )
-  )
-import qualified Data.Queue as Q
-  ( atlas
-  , cat
-  , egg
-  , many
-  , take
-  , (!<)
-  , (<<<=)
-  , Week
-  , Time (..)
-  , Day
-      ( Fri
-      , Mon
-      , Sat
-      , Sun
-      , Thur
-      , Tue
-      , Wed
-      )
-  )
-import qualified Data.Queue as Q
-  ( atlas
-  , cat
-  , egg
-  , take
-  , X.Y.Z.M.many
-  , (!<)
-  , (<<<=)
-  , Week
-  , Time (..)
-  , Day
-      ( Fri
-      , Mon
-      , Sat
-      , Sun
-      , Thur
-      , Tue
-      , Wed
-      )
-  )
-import qualified Data.Semaphore.Ident as Q.Sem
-  ( atlas
-  , cat
-  , egg
-  , many
-  , take
-  , (!<)
-  , (<<<=)
-  , Week
-  , Time (..)
-  , Day
-      ( Fri
-      , Mon
-      , Sat
-      , Sun
-      , Thur
-      , Tue
-      , Wed
-      )
-  , ZooLand
-      ( ant
-      , dog
-      , fox
-      , zebra
-      )
-  )
+import DA.Optional.Total (fromSomeNote)
 
--- imports by DA.*
+-- imports by DA.Finance*
 
-import DA.Alphabet.Soup
-import DA.Apex.A
-import DA.Apex.B
-import DA.Time
-import DA.Traversable
+import DA.Finance.Asset
+import DA.Finance.Asset.Settlement
+import DA.Finance.Base.RollConvention
+import DA.Finance.Instrument.Equity.CashDividend
+import DA.Finance.Instrument.Equity.StockSplit
+import DA.Finance.Trade.Dvp
+import DA.Finance.Trade.Dvp.Settlement
+import DA.Finance.Trade.SettlementInstruction
+import DA.Finance.Types
+import DA.Finance.Utils
 
-import DA.Action.App.Main ()
-import DA.Next.Map ()
-import DA.Prelude ()
+-- imports by Test*
 
-import DA.Next.Numeric
-  ( take
-  , Add
-  , Plus
-  , Minus (..)
-  , Multiple (..)
-  )
-import DA.Next.Numeric2
-  ( take
-  , Minus (..)
-  )
-import DA.Next.Set
-  ( Union (..)
-  )
-import DA.Next.Set2
-  ( cartesian
-  , diff
-  )
+import Test.Finance.Market.Asset
+import Test.Finance.Market.Dvp
+import Test.Finance.Market.Instrument
+import Test.Finance.Market.Party
+import Test.Finance.Utils
+import Test.StartupScript
 
-import qualified DA.Time
-import qualified DA.Traversable
+-- imports by Danban*
 
-import "aaa" DA.Action.Main ()
+import Danban.V3_2.Util
 
-import "bbb" DA.Time
-
-import "bbb" DA.Action ()
-import "bbb" DA.Text ()
-
-import "ccc" DA.Adelaide
-import "ccc" DA.Cat
-import "ccc" DA.Traversable
-
-import "ccc" DA.Apple
-  ( berry
-  , water
-  , Car
-      ( Ford
-      , Holden
-      , Honda
-      )
-  )
-
-import "ccc" qualified DA.Apple as B
-
--- imports by Rejig*
-
-import Rejig.Main.App
-import Rejig.Main.AppZone
-import Rejig.Main.Core
-
-import Rejig.Main.Workbench ()
-
-import qualified Rejig.Main.Domain as D.Serv
-
-import qualified Rejig.Main.Service as S
-  ( red
-  , (<*!*>)
-  , Sale
-      ( Discount
-      , Free
-      , Summond
-      )
-  )
-
--- package qualified
-
-import "aaa" Data.Core.Cap
-import "aaa" Data.List
-
-import "aaa" qualified Data.Applicative as App
-  ( Base
-  , Order
-  , App (..)
-  , House
-      ( Commercial
-      , Residential
-      , Retail
-      )
-  , Month
-      ( Aa
-      , Am
-      , Aq
-      , Ba
-      , Bd
-      , Ca
-      , Cd
-      )
-  )
-import "aaa" qualified Data.Functor as A.B.C
-  ( app
-  , map
-  , (<||>)
-  , Month
-      ( mar
-      , may
-      , Apr
-      , Feb
-      , Jan
-      , June
-      )
-  )
-
-import "bbb" Data.Applicative.Hello
-
-import "bbb" qualified Data.Functor as F
+import Danban.V3_2.Board qualified as Board
+import Danban.V3_2.User qualified as User
 
 --------------------------------------------------------------------------------
 
+move : Int -> Int -> [a] -> [a]
+move oldIdx newIdx xs =
+  let lowIdx = min oldIdx newIdx
+      highIdx = max oldIdx newIdx
+      (s1, r) = splitAt lowIdx xs
+      (s2, s3) = splitAt (highIdx - lowIdx) r
+      (s2', s3') = if oldIdx < newIdx
+        then (tail s2, head s3 :: head s2 :: tail s3)
+        else (head s3 :: s2, tail s3)
+  in s1 ++ s2' ++ s3'

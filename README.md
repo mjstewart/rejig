@@ -4,11 +4,109 @@
 
 A "module header" (import / export declarations) formatting tool for `haskell` and [daml](https://github.com/digital-asset/daml).
 
-This tool provides an opinionated way to group and deep sort import/export declarations by *structural components*. Constrast this to other fomatters that only perform a top level ordering by alphabetical module name.
+This tool provides an opinionated strategy for grouping and deep sorting import/export declarations by *structural components*. Contrast this to other code formatters that tend to perform a simple top level ordering by alphabetical module name only.
 
-`rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged.
+`rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged. Its designed for use with `daml` in mind which cant leverage existing haskell formatters since the languages aren't exactly 1 to 1.
 
-# Hows it work?
+# Installation
+
+`rejig` is a cli tool and requires the binary to be on the `$PATH`.
+
+### 1. Download binary
+https://github.com/mjstewart/rejig/releases
+
+### 2. Add to path
+
+Add `rejig` to your `$PATH` however you prefer.
+
+Here's an example of my linux setup.
+
+```
+-- I keep user apps in /opt so I move the download there.
+mv ~/Downloads/rejig /opt
+
+-- Ensure its executable
+chmod +x /opt/rejig
+
+-- symlink so its available somewhere on $PATH
+ln -s -f /opt/rejig /usr/bin/rejig
+```
+
+I don't use windows so I don't know if this will work, the binary **should** work if invokved using `rejig.exe`.
+
+# Usage
+
+```
+Usage: rejig
+  (--file FILEPATH | --stdin DESCRIPTION)
+  (--haskell | --daml)
+  [--prefixes ARG1 ARG2 ...]
+  [--titles]
+  [--border-top]
+  [--border-bottom]
+```
+
+## typical usage
+
+via file
+```
+rejig --file ~/myapp/main.daml --daml --prefixes "DA MyApp Test" --titles --border-top --border-bottom
+```
+
+via stdin
+
+```
+cat ~/myapp/main.daml | rejig --stdin --daml --prefixes "DA MyApp Test" --titles --border-top --border-bottom
+```
+
+## Arg definitions
+
+```
+(--file FILEPATH | --stdin DESCRIPTION)
+```
+Either the full file path or when supplying via `stdin`, supply a description such as the name of the file to make error reporting clearer.
+
+```
+--prefixes "DA. DA.Lib.Finance MyApp Test"
+```
+
+`--prefixes` create new groupings for further clarity and ordering. Without this flag, the majority of the imports would all fall into the same group which may or may not be desirable.
+
+Consider a `daml` project, I find it nice to group all the `DA` standard libs together, then my own namespace + tests.
+Each new prefix group receives a descriptive title when `--titles` is enabled.
+
+```
+
+```
+
+ then you'll also have your own module namespaces and tests too. Each prefix group receives their own title when `--titles` is enabled.
+
+Prefixes must be separated by whitespace and the most specific prefix must be placed last.
+
+If a module name matches one of these prefixes its placed into their own group rather than be lumped together with everything else.
+
+The most specific import must be listed last, eg `DA.Lib.Finance` is more specific than `DA` so therefore `DA` is listed before as a 'catch all' type mechanism.
+
+
+# FAQ
+
+
+
+
+
+
+# Editor integration
+
+## vscode
+
+[rejig-vscode-extension](https://github.com/mjstewart/rejig-vscode-extension) connects to the underlying `rejig` cli available on the `$PATH`. A command is registered and made avalable within `haskell` or `daml` files.
+
+1. invoke the command pallet `ctrl+shift+p`
+2. `>Rejig Document`
+3. document is formatted or errors are written to `rejig-errors.txt` in workspace root.
+
+
+# Formatting rules
 
 Lets review what a module header is by looking at the example snippet below which explains how `rejig` works.
 
@@ -195,7 +293,6 @@ Within each top level group above, a nested subsort is performed using the follo
 
 # Getting started
 
-`rejig` is a cli tool
 
 
 

@@ -120,3 +120,8 @@ docsP p = do
         , try $ CommentNewLine <$ (lexeme newline)
         , try $ blockCommentP
         ])
+
+
+need to handle import statements with comments because i insert comments between
+each group with --titles enabled!! damn!!
+

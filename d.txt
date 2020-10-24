@@ -11,21 +11,22 @@ where
 -- standard imports
 
 import Daml.Script
+import Daml.Trigger
 
 import Prelude hiding (submit)
 
 -- imports by DA*
 
-import DA.Action
-import DA.Assert
-import DA.Either
-import DA.List
-import DA.Next.Set
+import DA.Action (when, replicateA, (<=<))
+import DA.Assert (===)
+import DA.Either qualified as E
+import DA.List qualified as L
+import DA.Next.Set (Set)
+import DA.Next.Set qualified as S
 
 import DA.Date as D
-import DA.List as List
-import DA.Next.Map as Map
-import DA.Next.Set as Set
+import DA.Next.Map (Map)
+import DA.Next.Map qualified as Map
 
 import DA.Foldable hiding
   ( all
