@@ -1,69 +1,55 @@
 
 
--- line1 a
--- line2 a
-
-
--- line1 b
-{- block
-
-      comment in here
-
- -}
-{-# OPTIONS_GHC -Wno-orphans #-}
-
-
--- flx 1
--- aapple
-
-
--- caddable
-
-
-{-| hi ther
-     smokey 2
--}
-
--- a
--- y
-{-# LANGUAGE FlexibleInstances  #-}
-
--- apple
--- 123
-
-
--- NOTE(MH): We define 4 detail levels:
--- -2: Omit all type information, kind annotations, package ids and location information.
--- -1: Omit all package ids and all location information.
+-- Copyright (c) 2020 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+-- SPDX-License-Identifier: Apache-2.0
 
 
 
-module DA.Daml.LF.Ast.Pretty(
-    (<:>), map, (<##>)
-    ) where
 
-import qualified Data.Ratio                 as Ratio
-import           Control.Lens
-import           Control.Lens.Ast   (rightSpine)
-import qualified Data.NameMap as NM
-import qualified Data.Text          as T
-import qualified Data.Time.Clock.POSIX      as Clock.Posix
-import qualified Data.Time.Format           as Time.Format
-import           Data.Foldable (toList)
+-- | Map - A `Map` is an associative array data type composed of a
+-- collection of key/value pairs such that each possible key appears
+-- at most once in the collection.
 
-import           DA.Daml.LF.Ast.Base hiding (dataCons)
-import           DA.Daml.LF.Ast.TypeLevelNat
-import           DA.Daml.LF.Ast.Util
-import           DA.Daml.LF.Ast.Optics
-import           DA.Pretty hiding (keyword_, pretty, type_)
 
--- NOTE(MH): We define 4 detail levels:
--- -2: Omit all type information, kind annotations, package ids and location information.
--- -1: Omit all package ids and all location information.
--- 0 (default): Omit all location information.
--- 1: Print everything.
-levelHasTypes, levelHasKinds, levelHasPackageIds, levelHasLocations :: PrettyLevel -> Bool
-levelHasTypes lvl = lvl >= PrettyLevel (-1)
-levelHasKinds lvl = lvl >= PrettyLevel (-1)
-levelHasPackageIds lvl = lvl >= PrettyLevel 0
-levelHasLocations lvl = lvl >= PrettyLevel 1
+
+
+
+
+
+
+module DA.Next.Map
+  ( Map
+  , MapKey (..)
+  , empty
+  , size
+  , toList
+  , fromList
+  , fromListWith
+  , toTextMap
+  , fromTextMap
+  , null
+  , lookup
+  , member
+  , filter
+  , filterWithKey
+  , delete
+  , insert
+  , union
+  , merge
+  ) where
+
+import Prelude hiding (lookup, null, filter, empty)
+import DA.Foldable qualified as Foldable
+import DA.Text
+import DA.TextMap (TextMap)
+import DA.TextMap qualified as TextMap
+
+
+import DA.Traversable qualified as Traversable
+import DA.Tuple
+
+-- | A `Map k v` is an associative array data type composed of a
+-- collection of key/value pairs of key type `k` and value type `v`
+-- such that each possible key appears at most once in the collection.
+newtype Map k v = Map with textMap : TextMap v
+  deriving (Eq, Ord, Foldable.Foldable)

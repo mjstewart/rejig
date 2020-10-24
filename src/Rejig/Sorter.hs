@@ -229,5 +229,6 @@ instance TopLevelWeight IE where
     IEVar x -> topLevelWeight x
     IEThingAbs _ -> 300
     IEThingAll _ -> 400
-    IEThingWith _ _ -> 500
-    IEModuleContents _ -> 600
+    IEThingWith _ xs -> if null xs then 500 else 600
+    IEModuleContents _ -> 700
+    IEPatternContents _ -> 800

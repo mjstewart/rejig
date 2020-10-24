@@ -34,6 +34,7 @@ ieP =
       , try thingAllP
       , try thingAbsP
       , try moduleContents
+      , try patternContents
       , varP
       ]
       `sepBy` comma
@@ -47,6 +48,8 @@ ieP =
     thingWithP = IEThingWith <$> qconid <*> cnameP
 
     moduleContents = IEModuleContents <$> (keyword "module" *> qconid)
+
+    patternContents = IEPatternContents <$> (keyword "pattern" *> qconid)
 
     cnameP =
       parens $

@@ -6,16 +6,20 @@ module Rejig.V2_34.ImportSort
   , Kettle (..)
   , module Cat.Dog.Y
   , cat
+  , Alice
   , Month (Jan, Feb, Apr, Aug, Nov, Dec)
   , Cal.Month (Bal.Cal.Bag, Cal.Jan, App.Abbs, Z.Aggr, Bal.Cal.Feb, Z.Apr, App.Aug, Lang.Nov, A.B.CDec)
   , Speed (High, Med, (<|||>), mapple, date, app, Slow, (<***>) )
   , module Cat
   , apple
+  , Dog ()
+  , Claire
   , Apple (..)
   , A.B.C.manifold
   , A.B.C.egg
   , module Cat.Apple.Banana
   , Kite (..)
+  , Bob
   , Bag.Unite (C.Fish)
   , module Cat.Apple.Accord
   , A.T.cat
@@ -23,6 +27,7 @@ module Rejig.V2_34.ImportSort
   , Cattle (..)
   )
 where
+
 
 import "aaa" qualified Data.Functor as
  A.B.C (Month (Jan, Feb, mar, Apr, may, June), map, app, (<||>))

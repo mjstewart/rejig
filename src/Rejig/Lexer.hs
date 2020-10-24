@@ -17,83 +17,83 @@ import Prelude hiding (many, some)
 special :: Set Char
 special =
   Set.fromList
-    [ '(',
-      ')',
-      ',',
-      ';',
-      '[',
-      ']',
-      '`',
-      '{',
-      '}'
+    [ '('
+    , ')'
+    , ','
+    , ';'
+    , '['
+    , ']'
+    , '`'
+    , '{'
+    , '}'
     ]
 
 reservedId :: Set Text
 reservedId =
   Set.fromList
-    [ "case",
-      "class",
-      "data",
-      "default",
-      "deriving",
-      "do",
-      "else",
-      "if",
-      "import",
-      "in",
-      "infix",
-      "infixl",
-      "infixr",
-      "instance",
-      "let",
-      "module",
-      "newtype",
-      "of",
-      "then",
-      "type",
-      "where",
-      "_",
-      "template"
+    [ "case"
+    , "class"
+    , "data"
+    , "default"
+    , "deriving"
+    , "do"
+    , "else"
+    , "if"
+    , "import"
+    , "in"
+    , "infix"
+    , "infixl"
+    , "infixr"
+    , "instance"
+    , "let"
+    , "module"
+    , "newtype"
+    , "of"
+    , "then"
+    , "type"
+    , "where"
+    , "_"
+    , "template"
     ]
 
 reservedOp :: Set Text
 reservedOp =
   Set.fromList
-    [ "..",
-      ":",
-      "::",
-      "=",
-      "\\",
-      "|",
-      "<-",
-      "->",
-      "@",
-      "~",
-      "=>"
+    [ ".."
+    , ":"
+    , "::"
+    , "="
+    , "\\"
+    , "|"
+    , "<-"
+    , "->"
+    , "@"
+    , "~"
+    , "=>"
     ]
 
 ascSymbols :: Set Char
 ascSymbols =
-  Set.fromList [
-    '!',
-    '#',
-    '$',
-    '%',
-    '&',
-    '*',
-    '+',
-    '.',
-    '/',
-    '<',
-    '=',
-    '>',
-    '?',
-    '@',
-    '\\',
-    '^',
-    '|',
-    '-',
-    '~'
+  Set.fromList
+  [ '!'
+  , '#'
+  , '$'
+  , '%'
+  , '&'
+  , '*'
+  , '+'
+  , '.'
+  , '/'
+  , '<'
+  , '='
+  , '>'
+  , '?'
+  , '@'
+  , '\\'
+  , '^'
+  , '|'
+  , '-'
+  , '~'
   ]
 
 -- | newline space consumer that doesnt skip comments

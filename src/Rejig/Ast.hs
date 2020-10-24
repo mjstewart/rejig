@@ -158,6 +158,8 @@ data IE
   -- ^ Class/Type plus some methods/constructors eg: Month (Jan, Feb)
   | IEModuleContents QConId
     -- ^ module xyz - exports only
+  | IEPatternContents QConId
+    -- ^ pattern xyz - exports only
   deriving (Show, Eq)
 
 ieIndex :: IE -> Int
@@ -167,6 +169,7 @@ ieIndex = \case
   IEThingAll _ -> 2
   IEThingWith _ _ -> 3
   IEModuleContents _ -> 4
+  IEPatternContents _ -> 5
 
 instance Ord IE where
   compare (IEVar a) (IEVar b) = compare a b
@@ -175,6 +178,8 @@ instance Ord IE where
   compare (IEThingWith conidA namesA) (IEThingWith conidB namesB) =
     compare conidA conidB <> compare namesA namesB
   compare (IEModuleContents a) (IEModuleContents b) =
+    compare a b
+  compare (IEPatternContents a) (IEPatternContents b) =
     compare a b
   compare a b = compare (ieIndex a) (ieIndex b)
 
