@@ -115,8 +115,8 @@ mkDefaultSettings =
   pure $
     Settings
       { _sInput = StdInput "demo"
-      , _ssrcLang = Haskell
-      , _sPrefixGroups = ["DA.", "DA.Finance", "Test", "Rejig", "Danban"]
+      , _ssrcLang = Daml
+      , _sPrefixGroups = ["Daml", "DA", "DA.Next", "DA.Finance", "Test", "Rejig", "MyApp", "Danban"]
       , _sDisplayGroupTitle = True
       , _sImportBorderTop = True
       , _sImportBorderBottom = True

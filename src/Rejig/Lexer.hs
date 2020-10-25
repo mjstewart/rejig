@@ -132,6 +132,19 @@ takeTillNewLine :: Parser Text
 takeTillNewLine =
   takeWhileP Nothing (/= '\n')
 
+rejigBorder :: Parser ()
+rejigBorder =
+  void $ lexeme $ takeWhileP Nothing (== '-') <* newline
+
+rejigTitles :: Parser ()
+rejigTitles  =
+ void $ lexeme $ choice
+  [
+    try $ string "-- imports by " <* takeTillNewLine
+  , string "-- standard imports"
+  , string "-- package qualified"
+  ]
+
 -- ends with a new line and consumes all space up until the next potential comment
 singleLineCommentP :: Parser Text
 singleLineCommentP =
@@ -280,7 +293,7 @@ modids endP = do
     <$> count (qualifiedDots - 1) (modid <* dot)
     <*> endP
 
-{-
+{-| We need to know when to stop looking for the end of a qualified modid
   qvarid -> [ modid . ] varid
   qconid -> [ modid . ] conid
   qtycon -> [ modid . ] tycon

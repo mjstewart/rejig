@@ -51,23 +51,6 @@ data ImportDecl = ImportDecl
   }
   deriving (Show, Eq)
 
-data PartitionedImports = PartitionedImports
-  { _piRest :: CG ImportDeclGroups
-    -- ^ catch all 'standard imports' that dont fall into the other groups
-  , _piPrefixTargets :: [CG ImportDeclGroups]
-    -- ^ imports grouped by user defined setting
-  , _piPkgQuals :: CG ImportDeclGroups
-    -- ^ contains package qualified imports in the form - import "pkg" ...
-  }
-  deriving (Show, Eq)
-
--- | CG = Comment group, its purpose is to attach a comment to the start of a group which acts as a title.
-data CG a = CG
-  { _cgComment :: Maybe Text,
-    _cgGroup :: a
-  }
-  deriving (Show, Eq, Functor)
-
 -- Defining lots of newtypes for things to implement 'Pretty' typeclass instance.
 
 newtype ImportDecls = ImportDecls {unImportDecls :: [ImportDecl]}
@@ -172,16 +155,37 @@ ieIndex = \case
   IEPatternContents _ -> 5
 
 instance Ord IE where
-  compare (IEVar a) (IEVar b) = compare a b
-  compare (IEThingAbs a) (IEThingAbs b) = compare a b
-  compare (IEThingAll a) (IEThingAll b) = compare a b
+  compare (IEVar a) (IEVar b) =
+    compare a b
+  compare (IEThingAbs a) (IEThingAbs b) =
+    compare a b
+  compare (IEThingAll a) (IEThingAll b) =
+    compare a b
   compare (IEThingWith conidA namesA) (IEThingWith conidB namesB) =
     compare conidA conidB <> compare namesA namesB
   compare (IEModuleContents a) (IEModuleContents b) =
     compare a b
   compare (IEPatternContents a) (IEPatternContents b) =
     compare a b
-  compare a b = compare (ieIndex a) (ieIndex b)
+  compare a b =
+    compare (ieIndex a) (ieIndex b)
+
+data PartitionedImports = PartitionedImports
+  { _piRest :: CG ImportDeclGroups
+    -- ^ catch all 'standard imports' that dont fall into the other groups
+  , _piPrefixTargets :: [CG ImportDeclGroups]
+    -- ^ imports grouped by user defined setting
+  , _piPkgQuals :: CG ImportDeclGroups
+    -- ^ contains package qualified imports in the form - import "pkg" ...
+  }
+  deriving (Show, Eq)
+
+-- | CG = Comment group, its purpose is to attach a comment to the start of a group which acts as a title.
+data CG a = CG
+  { _cgComment :: Maybe Text,
+    _cgGroup :: a
+  }
+  deriving (Show, Eq, Functor)
 
 -- Initial parse result
 data ModuleHeader = ModuleHeader

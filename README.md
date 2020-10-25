@@ -2,11 +2,11 @@
 
 ***organise (something) differently; rearrange.***
 
-A "module header" (import / export declarations) formatting tool for `haskell` and [daml](https://github.com/digital-asset/daml).
+A *"module header"* (import / export declarations) formatting tool for `haskell` and [daml](https://github.com/digital-asset/daml).
 
-This tool provides an opinionated strategy for grouping and deep sorting import/export declarations by *structural components*. Contrast this to other code formatters that tend to perform a simple top level ordering by alphabetical module name only.
+This tool provides an opinionated strategy for grouping and deep sorting import/export declarations by *structural components* instead of by simple alphabetical module names.
 
-`rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged. Its designed for use with `daml` in mind which cant leverage existing haskell formatters since the languages aren't exactly 1 to 1.
+`rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged.
 
 # Installation
 
@@ -17,7 +17,7 @@ https://github.com/mjstewart/rejig/releases
 
 ### 2. Add to path
 
-Add `rejig` to your `$PATH` however you prefer.
+Use your preferred method of adding `rejig` to your `$PATH`
 
 Here's an example of my linux setup.
 
@@ -32,7 +32,7 @@ chmod +x /opt/rejig
 ln -s -f /opt/rejig /usr/bin/rejig
 ```
 
-I don't use windows so I don't know if this will work, the binary **should** work if invokved using `rejig.exe`.
+I don't use windows so I don't know if this will work, the binary *"should"* work if invokved using `rejig.exe`.
 
 # Usage
 
@@ -46,47 +46,131 @@ Usage: rejig
   [--border-bottom]
 ```
 
-## typical usage
+## typical examples
 
 via file
 ```
-rejig --file ~/myapp/main.daml --daml --prefixes "DA MyApp Test" --titles --border-top --border-bottom
+rejig --file ~/myapp/main.daml --daml --prefixes "Daml DA MyApp Test" --titles --border-top --border-bottom
 ```
 
 via stdin
 
 ```
-cat ~/myapp/main.daml | rejig --stdin --daml --prefixes "DA MyApp Test" --titles --border-top --border-bottom
+cat ~/myapp/main.daml | rejig --stdin --daml --prefixes "Daml DA MyApp Test" --titles --border-top --border-bottom
 ```
 
-## Arg definitions
+## Args
 
+
+## `--file | --stdin`
 ```
 (--file FILEPATH | --stdin DESCRIPTION)
 ```
-Either the full file path or when supplying via `stdin`, supply a description such as the name of the file to make error reporting clearer.
 
+`rejig` can read from a `--file` using the full path or pipe input using `--stdin` along with a description such as filename to make error reporting clearer.
+
+## `--haskell | --daml`
+
+input source language
+
+## `--prefixes`
 ```
---prefixes "DA. DA.Lib.Finance MyApp Test"
-```
-
-`--prefixes` create new groupings for further clarity and ordering. Without this flag, the majority of the imports would all fall into the same group which may or may not be desirable.
-
-Consider a `daml` project, I find it nice to group all the `DA` standard libs together, then my own namespace + tests.
-Each new prefix group receives a descriptive title when `--titles` is enabled.
-
-```
-
+--prefixes "DA DA.Next DA.Finance Daml MyApp Test"
 ```
 
- then you'll also have your own module namespaces and tests too. Each prefix group receives their own title when `--titles` is enabled.
+`--prefixes` enables user defined groupings of imports. Without this flag, the majority of the imports would all fall into the same group which may or may not be desirable.
 
-Prefixes must be separated by whitespace and the most specific prefix must be placed last.
+**Important**: prefixes must be separated by whitespace and the most specific prefix listed from right to left.
 
-If a module name matches one of these prefixes its placed into their own group rather than be lumped together with everything else.
+Consider a `daml` project, based on the above `--prefixes`, the formatted result would as follows.
 
-The most specific import must be listed last, eg `DA.Lib.Finance` is more specific than `DA` so therefore `DA` is listed before as a 'catch all' type mechanism.
+Note: the group titles are enabled via `--titles`
 
+```
+-- standard imports
+
+import Something.Utils
+
+-- imports by DA*
+
+import DA.Action
+
+import DA.Optional qualified as O
+
+-- imports by DA.Finance*
+
+import DA.Finance.Asset
+import DA.Finance.Asset.Settlement
+
+-- imports by DA.Next*
+
+import DA.Next.Map qualified as M
+import DA.Next.Set qualified as S
+
+-- imports by Daml*
+
+import Daml.Script
+import Daml.Trigger
+
+-- imports by MyApp*
+
+import MyApp.Controller
+import MyApp.Model
+
+-- imports by Test*
+
+import Test.App.Base
+import Test.App.Helpers
+
+```
+
+## `--titles`
+
+adds a single comment description above each primary category that `rejig` defines.
+
+Each unique prefix group receives its own grouping + title, otherwise the import will be in the standard *"catch all"* import group unless its package qualified.
+
+```
+-- standard imports
+-- imports by ${PREFIX}
+-- package qualified
+```
+
+## `--border-top`
+
+For visual purposes, an 80 character dashed comment is inserted before the first import if one exists.
+
+```
+module My.App
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
+...
+```
+
+combined with `--border-bottom`, frames the import section as a whole.
+
+## `--border-bottom`
+
+For visual purposes, an 80 character dashed comment is inserted after the last import if one exists.
+
+```
+module My.App
+where
+
+-- standard imports
+
+...
+
+--------------------------------------------------------------------------------
+
+...rest of source code
+
+```
+
+combined with `--border-top`, frames the import section as a whole.
 
 # FAQ
 
@@ -99,11 +183,12 @@ The most specific import must be listed last, eg `DA.Lib.Finance` is more specif
 
 ## vscode
 
-[rejig-vscode-extension](https://github.com/mjstewart/rejig-vscode-extension) connects to the underlying `rejig` cli available on the `$PATH`. A command is registered and made avalable within `haskell` or `daml` files.
+[rejig-vscode-extension](https://github.com/mjstewart/rejig-vscode-extension) connects to the underlying `rejig` cli available on the `$PATH`. A command is registered and made available within `haskell` or `daml` files.
 
 1. invoke the command pallet `ctrl+shift+p`
 2. `>Rejig Document`
-3. document is formatted or errors are written to `rejig-errors.txt` in workspace root.
+
+Any errors are written to `rejig-errors.txt` in workspace root.
 
 
 # Formatting rules
@@ -114,9 +199,10 @@ As we read the module header top down, observe that `rejig` sorts and groups dec
 
 Notice that each grouping is sorted as deep as possible (pragmas included).
 
-Regarding support for comments: they're only supported where mentioned to simplify matters and avoids having comments scattered within import statements for example.
+Regarding support for comments: they're only supported where mentioned to simplify matters and cater for things like legal disclaimers often found before the header declaration. `rejig` takes the ownership of managing any comments it creates through its various flags such as `--titles`.
 
 Note: The below snippet is annotated with many comments for explanation and not included in `rejig` output.
+
 ```
   -- comments
 

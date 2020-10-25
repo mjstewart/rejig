@@ -90,13 +90,13 @@ importDeclP = do
 
 importsP :: Parser ImportDecls
 importsP =
-  ImportDecls <$> many importDeclP
+  ImportDecls <$> many (try (rejigTitles *> lexeme importDeclP) <|> lexeme importDeclP)
 
 modHeaderP :: Parser ModuleHeader
 modHeaderP = do
   _modName <- keyword "module" *> qconid
   _modExports <- (ieP <|> pure []) <* keyword "where"
-  _modImports <- importsP
+  _modImports <- (try rejigBorder *> importsP <|> importsP)
   pure $ ModuleHeader {..}
 
 parseSourceP :: Parser ParsedSource
@@ -104,24 +104,21 @@ parseSourceP = do
   _srcGhcOpts <- many $ try $ docsP ghcOptionP
   _srcLangExts <- many $ try $ docsP langExtP
   _srcModHeader <- docsP modHeaderP
-  _srcRest <- T.pack <$> (manyTill anySingle eof)
+  _srcRest <- T.pack <$> (try (rejigBorder *> everythingElse) <|> everythingElse)
   pure $ ParsedSource {..}
+  where
+    everythingElse = manyTill anySingle eof
 
 -- | Collects any comments that occur before `p`.
 docsP :: Parser a -> Parser (DocString a)
 docsP p = do
   DocString <$> leadingCommentsP <*> p
-  where
-    leadingCommentsP :: Parser [Comment]
-    leadingCommentsP =
-      scn *> (many $
-        choice [
-          try $ SingleLineComment <$> singleLineCommentP
-        , try $ CommentNewLine <$ (lexeme newline)
-        , try $ blockCommentP
-        ])
 
-
-need to handle import statements with comments because i insert comments between
-each group with --titles enabled!! damn!!
-
+leadingCommentsP :: Parser [Comment]
+leadingCommentsP =
+  scn *> (many $
+    choice [
+      try $ SingleLineComment <$> singleLineCommentP
+    , try $ CommentNewLine <$ (lexeme newline)
+    , try $ blockCommentP
+    ])
