@@ -136,7 +136,6 @@ mkDefaultSettings =
       , _sImportBorderBottom = True
       }
 
-
 -- For testing
 parseFile :: FilePath -> IO ()
 parseFile path = do
