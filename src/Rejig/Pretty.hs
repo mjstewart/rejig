@@ -1,13 +1,27 @@
-module Rejig.Pretty where
+module Rejig.Pretty
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
 
 import Control.Monad.Reader
-import qualified Data.Text as T
+import Text.PrettyPrint
+
+import Prelude hiding
+  ( empty
+  )
+
 import qualified Data.List as L
+import qualified Data.Text as T
+
+-- imports by Rejig*
+
 import Rejig.Ast
 import Rejig.Lang
 import Rejig.Settings
-import Text.PrettyPrint
-import Prelude hiding (empty)
+
+--------------------------------------------------------------------------------
 
 class Pretty a where
   showPretty :: a -> Reader Settings Doc

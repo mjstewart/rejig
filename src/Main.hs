@@ -1,16 +1,30 @@
-module Main where
+module Main
+where
 
-import qualified Control.Exception as Ex
-import Rejig.Sorter
-import Rejig.Parser
-import Rejig.Pretty (showPretty)
-import Rejig.Settings
+--------------------------------------------------------------------------------
+
+-- standard imports
+
 import Text.Megaparsec
-import Text.PrettyPrint (render)
-import qualified Options.Applicative as O
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 
+import Text.PrettyPrint
+  ( render
+  )
+
+import qualified Data.Text.IO as TIO
+import qualified Options.Applicative as O
+
+-- imports by Rejig*
+
+import Rejig.Parser
+import Rejig.Settings
+import Rejig.Sorter
+
+import Rejig.Pretty
+  ( showPretty
+  )
+
+--------------------------------------------------------------------------------
 
 fileInput :: O.Parser Input
 fileInput =
@@ -122,42 +136,16 @@ mkDefaultSettings =
       , _sImportBorderBottom = True
       }
 
--- runPrettyRender :: Pretty a => Settings -> a -> String
--- runPrettyRender settings source =
--- render $ runReader (showPretty sorted) settings
 
--- where
--- sorted = runReader (sortImports source) settings
-
--- writeFormattedFile :: ReaderT Settings IO ()
--- writeFormattedFile = do
--- settings <- ask
-
+-- For testing
 parseFile :: FilePath -> IO ()
 parseFile path = do
-  result <- Ex.try (readFileText path) :: IO (Either Ex.SomeException Text)
+  txt <- TIO.readFile path
   settings <- mkDefaultSettings
 
-  case result of
-    Left e -> pure ()
-    Right txt -> do
-      -- case runParser singleLineCommentsP "test" txt of
-      -- case runParser leadingCommentsP "test" txt of
-      case runParser parseSourceP "test" txt of
-        Left bundle -> writeFile "result.txt" (errorBundlePretty bundle)
-        Right res ->
-          writeFile "result.txt" $
-            -- render $ runReader (showPretty $ runReader (sortImports res) settings) settings
-            render $
-              runReader (showPretty $ runReader (sortParsedSource res) settings) settings
-            -- render $ show res
-
-      pure ()
-
--- parseFile :: FilePath -> IO (Either Ex.SomeException Text)
--- parseFile path = do
--- result <- Ex.try (readFileText path) :: IO (Either Ex.SomeException Text)
--- case result of
--- Left e -> pure $ Left
--- Right txt ->
--- Parser.import
+  case runParser parseSourceP "test" txt of
+    Left bundle -> writeFile "test/snippets/result.txt" (errorBundlePretty bundle)
+    Right res ->
+      writeFile "test/snippets/result.txt" $
+        render $
+          runReader (showPretty $ runReader (sortParsedSource res) settings) settings

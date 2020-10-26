@@ -13,9 +13,5 @@ spec =
       property $ \x y ->
         add x y == add y x
 
--- describe "me"
--- it "hi" $ property $ \x y ->
--- add x y == add y x
-
 add :: Int -> Int -> Int
 add x y = x + y

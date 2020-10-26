@@ -2,11 +2,13 @@
 
 ***organise (something) differently; rearrange.***
 
-A *"module header"* (import / export declarations) formatting tool for `haskell` and [daml >= 1.6](https://github.com/digital-asset/daml).
+A *"module header"* (import / export declarations) formatting tool for `haskell` and *[daml](https://github.com/digital-asset/daml).
 
-This tool provides an opinionated strategy for grouping and deep sorting import/export declarations by *structural components* instead of by simple alphabetical module names.
+This tool provides an opinionated strategy for grouping and deep sorting import/export declarations by *structural components* instead of simple alphabetical module names.
 
-`rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged.
+`rejig` doesn't attempt to be a code formatter, it simply formats the module header section and leaves the rest of the source code unchanged.
+
+\* supports `daml` version >= 1.6.0 only.
 
 ![Output sample](https://github.com/mjstewart/rejig-vscode-extension/blob/master/rejig-vscode-sample.gif)
 
@@ -16,11 +18,12 @@ This tool provides an opinionated strategy for grouping and deep sorting import/
 `rejig` is a cli tool and requires the binary to be on the `$PATH`.
 
 ### 1. Download binary
+
 https://github.com/mjstewart/rejig/releases
 
 ### 2. Add to path
 
-Use your preferred method of adding `rejig` to your `$PATH`
+Use your preferred method of adding `rejig` to the `$PATH`
 
 Here's an example of my linux setup.
 
@@ -37,6 +40,12 @@ ln -s -f /opt/rejig /usr/bin/rejig
 
 I don't use windows so I don't know if this will work, the binary *"should"* work if invokved using `rejig.exe`.
 
+# Editor integration
+
+## vscode
+
+[rejig-vscode-extension](https://github.com/mjstewart/rejig-vscode-extension)
+
 # Usage
 
 ```
@@ -49,17 +58,17 @@ Usage: rejig
   [--border-bottom]
 ```
 
-## typical examples
+## typical cli examples
 
 via file
 ```
-rejig --file ~/myapp/main.daml --daml --prefixes "Daml DA MyApp Test" --titles --border-top --border-bottom
+rejig --file ~/myapp/main.daml --daml --prefixes "Daml DA MyApp.Main MyApp.Test" --titles --border-top --border-bottom
 ```
 
 via stdin
 
 ```
-cat ~/myapp/main.daml | rejig --stdin --daml --prefixes "Daml DA MyApp Test" --titles --border-top --border-bottom
+cat ~/myapp/main.daml | rejig --stdin --daml --prefixes "Daml DA MyApp.Main MyApp.Test" --titles --border-top --border-bottom
 ```
 
 ## Args
@@ -70,7 +79,7 @@ cat ~/myapp/main.daml | rejig --stdin --daml --prefixes "Daml DA MyApp Test" --t
 (--file FILEPATH | --stdin DESCRIPTION)
 ```
 
-`rejig` can read from a `--file` using the full path or pipe input using `--stdin` along with a description such as filename to make error reporting clearer.
+Supply `rejig` with the file path or pipe input using `--stdin` along with a description such as filename to make error reporting clearer.
 
 ## `--haskell | --daml`
 
@@ -78,14 +87,14 @@ input source language
 
 ## `--prefixes`
 ```
---prefixes "DA DA.Next DA.Finance Daml MyApp Test"
+--prefixes "DA DA.Next DA.Finance Daml MyApp.Main MyApp.Test"
 ```
 
-`--prefixes` enables user defined groupings of imports. Without this flag, the majority of the imports would all fall into the same group which may or may not be desirable.
+`--prefixes` enables custom import groups. Without this flag, the majority of the imports would all fall into the same group which may or may not be desirable.
 
 **Important**: prefixes must be separated by whitespace and the most specific prefix listed from right to left.
 
-Consider a `daml` project, based on the above `--prefixes`, the formatted result would as follows.
+To get a feel for how this looks, consider a `daml` project. If using the above `--prefixes`, `rejig` would output something similar to the following snippet.
 
 Note: the group titles are enabled via `--titles`
 
@@ -115,15 +124,15 @@ import DA.Next.Set qualified as S
 import Daml.Script
 import Daml.Trigger
 
--- imports by MyApp*
+-- imports by MyApp.Main*
 
-import MyApp.Controller
-import MyApp.Model
+import MyApp.Main.Controller
+import MyApp.Main.Model
 
--- imports by Test*
+-- imports by MyApp.Test*
 
-import Test.App.Base
-import Test.App.Helpers
+import MyApp.Test.Base
+import MyApp.Test.Helpers
 
 ```
 
@@ -143,6 +152,8 @@ Each unique prefix group receives its own grouping + title, otherwise the import
 
 For visual purposes, an 80 character dashed comment is inserted before the first import if one exists.
 
+combined with `--border-bottom`, frames the import section as a whole.
+
 ```
 module My.App
 where
@@ -156,11 +167,11 @@ import Bob
 
 ```
 
-combined with `--border-bottom`, frames the import section as a whole.
-
 ## `--border-bottom`
 
 For visual purposes, an 80 character dashed comment is inserted after the last import if one exists.
+
+combined with `--border-top`, frames the import section as a whole.
 
 ```
 module My.App
@@ -176,20 +187,6 @@ import Bob
 ... rest of source
 ```
 
-combined with `--border-top`, frames the import section as a whole.
-
-# Editor integration
-
-## vscode
-
-[rejig-vscode-extension](https://github.com/mjstewart/rejig-vscode-extension) connects to the underlying `rejig` cli available on the `$PATH`. A command is registered and made available within `haskell` or `daml` files.
-
-1. invoke the command pallete `ctrl+shift+p`
-2. `>Rejig Document`
-
-Any errors are written to `rejig-errors.txt` in workspace root.
-
-
 # Formatting rules
 
 Lets review what a module header is by looking at the example snippet below which explains how `rejig` works.
@@ -200,7 +197,7 @@ Notice that each grouping is sorted as deep as possible (pragmas included).
 
 Regarding support for comments: they're only supported where mentioned to simplify matters and cater for things like legal disclaimers often found before the header declaration. `rejig` takes the ownership of managing any comments it creates through its various flags such as `--titles`.
 
-Note: The below snippet is annotated with many comments for explanation and not included in `rejig` output.
+Note: The below snippet is annotated with many comments for explanation and may not be included in `rejig` output.
 
 ```
   -- comments
@@ -376,34 +373,33 @@ Within each top level group above, a nested subsort is performed using the follo
     )
 ```
 
-# Getting started
-
-
-
-
-
-
-
-
-
-```
-
-echo "hi" | rejig --stdin
-
-rejig --file "a.hs" > a.hs
-
-```
-
 # FAQ
 
-errors
+## 1. Is there an editor plugin?
 
-daml v1.6 only
+[vscode](#Editor-Integration)
 
+## 2. `daml` parse errors
+
+`daml >= v1.6.0` is supported only
+
+## 3. pragma parse errors
+
+Only 2 pragmas are supported and `OPTIONS_GHC` must be first.
+
+  ```
+  {-# OPTIONS_GHC -Wall #-}
+  {-# LANGUAGE AllowAmbiguousTypes #-}
+  ```
+
+## 4. Missing comments
+
+user defined comments can only exist before any pragmas or module header as is the case for a legal title. A parse error or unexpected results will occur if comments are randomly added in the middle of import / export declarations (excluding auto generated `rejig` comments for `--titles` etc.)
 
 
 # Implementation
 
-This tool is implemented in `haskell` using [megaparsec](https://hackage.haskell.org/package/megaparsec) to parse "just enough" of the module headers defined in the haskell 98 grammar https://www.haskell.org/onlinereport/syntax-iso.html
+This tool is implemented in `haskell` using [megaparsec](https://hackage.haskell.org/package/megaparsec) to parse "just enough" of the module headers defined using the haskell 98 guide https://www.haskell.org/onlinereport/syntax-iso.html
 
-haskell parsers already exist so why write another one? Primarily for education into parsers and bigger plans to parse `daml` which won't work with a `haskell` parser.
+If haskell parsers already exist, why did I write my own? Primarily for education because I find parsing interesting and I wanted to write one in `haskell` :),
+there are some other technical reasons / bigger plans since I wanted to support `daml` too.

@@ -2,15 +2,36 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
-module Rejig.Sorter (sortParsedSource) where
+module Rejig.Sorter
+  ( sortParsedSource
+  )
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
+
+import Text.PrettyPrint
+  ( render
+  )
 
 import qualified Data.List as L
 import qualified Data.Text as T
+
+-- imports by Rejig*
+
 import Rejig.Ast
-import Rejig.Lang (runReader')
-import Rejig.Pretty (Pretty, showPretty)
 import Rejig.Settings
-import Text.PrettyPrint (render)
+
+import Rejig.Lang
+  ( runReader'
+  )
+import Rejig.Pretty
+  ( showPretty
+  , Pretty
+  )
+
+--------------------------------------------------------------------------------
 
 comparingBy :: [a -> a -> Ordering] -> a -> a -> Ordering
 comparingBy fs a b =

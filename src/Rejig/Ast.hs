@@ -2,10 +2,18 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Rejig.Ast where
+module Rejig.Ast
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
 
 import qualified Text.Show
+
 import qualified Data.Text as T
+
+--------------------------------------------------------------------------------
 
 data Comment
   = SingleLineComment Text

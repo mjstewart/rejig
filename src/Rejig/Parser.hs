@@ -1,17 +1,35 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TupleSections #-}
 
-module Rejig.Parser where
+module Rejig.Parser
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
 
 import Control.Monad.Combinators
 import Control.Monad.Reader
-import qualified Data.Text as T
-import Rejig.Ast
-import Rejig.Lang ( Parser )
-import Rejig.Lexer
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Prelude hiding (many, some)
+
+import Prelude hiding
+  ( many
+  , some
+  )
+
+import qualified Data.Text as T
+
+-- imports by Rejig*
+
+import Rejig.Ast
+import Rejig.Lexer
+
+import Rejig.Lang
+  ( Parser
+  )
+
+--------------------------------------------------------------------------------
 
 -- | {-# LANGUAGE <Extension> #-}
 langExtP :: Parser LangExt

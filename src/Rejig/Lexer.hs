@@ -1,14 +1,33 @@
-module Rejig.Lexer where
+module Rejig.Lexer
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
 
 import Control.Monad.Combinators
-import Rejig.Lang ( postValidate, Parser )
-import Rejig.Ast
-import qualified Data.Set as Set
-import qualified Data.Text as T
 import Text.Megaparsec
 import Text.Megaparsec.Char
+
+import Prelude hiding
+  ( many
+  , some
+  )
+
+import qualified Data.Set as Set
+import qualified Data.Text as T
 import qualified Text.Megaparsec.Char.Lexer as L
-import Prelude hiding (many, some)
+
+-- imports by Rejig*
+
+import Rejig.Ast
+
+import Rejig.Lang
+  ( postValidate
+  , Parser
+  )
+
+--------------------------------------------------------------------------------
 
 {-| This file contains all the lexing primitives to parse import/export declarations by using
   https://www.haskell.org/onlinereport/syntax-iso.html

@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:                rejig
-version:             0.1.0.0
+version:             0.0.1
 -- synopsis:
 -- description:
 -- bug-reports:
@@ -51,7 +51,6 @@ executable rejig
     Rejig.Pretty
     Rejig.Settings
     Rejig.Sorter
-
 
 test-suite rejig-tests
   import: deps

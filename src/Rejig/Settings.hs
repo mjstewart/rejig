@@ -1,4 +1,5 @@
-module Rejig.Settings where
+module Rejig.Settings
+where
 
 data ImportDeclQualifiedStyleSource
   = QualifiedPre

@@ -1,4 +1,45 @@
 
+-- c1
+-- c2
+--     c3
+--  | c45
+
+{-|      block comment
+
+
+
+  hello
+
+    -}
+
+{- me -}
+
+{-| me4
+
+
+-}
+
+--|TODO
+--  .. TOMe
+
+
+
+{-# OPTIONS_GHC -Wno-all-case #-}
+{-# OPTIONS_GHC -Wall #-}
+
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+{-# LANGUAGE DeriveFunctor #-}
+
+
+{-# LANGUAGE DerivingStrategies #-}
+
+
+
+
+
 module Rejig.ImportSort
   ( toSortedGroups
   , Q.Z.map
@@ -95,3 +136,8 @@ import Data.App.Apple.Hide qualified as Hi hiding ((<<<=), any, ba, dog, acting,
 actor, ant, Bart (..), zoo, Apple (..), Queue, Month(Mar, Feb, Jan, Apr, Aug), Year(..), bed, bandaid, (!<!>!))
 import Rejig.Main.AppZone
 
+
+
+
+f :: Int -> Int
+f x = x
