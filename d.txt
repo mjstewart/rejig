@@ -1,70 +1,72 @@
--- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
--- SPDX-License-Identifier: Apache-2.0
 
+-- rejig formatting example
+-- v2
+
+      {-| blocks are ok
+      -}
+
+{-# OPTIONS_GHC -Wno-all-case #-}
+
+{-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
-module Danban.V3_2.BoardVj
-where
+ {-# LANGUAGE RankNTypes #-}
+
+   {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 
-import Daml.Script
-import Daml.Trigger
-
-import Prelude hiding (submit)
 
 
-import Test.Finance.Market.Aa
-import DA.Action (when, replicateA, (<=<))
-import DA.Assert ((===))
+module MyApp.Main where
+
+
+
+import DA.Foldable (mapA_)
+import DA.Optional (fromSomeNote, listToOptionals, catOptionals, isSome, isNone)
 import DA.Either qualified as E
+import DA.Finance.Trade.Dvp
 import DA.List qualified as L
 import DA.Next.Set (Set)
-import DA.Next.Set qualified as S
 
-import DA.Date as D
-import DA.Next.Map (Map)
-import DA.Next.Map qualified as Map
-
-import DA.Foldable hiding
-  ( all
-  , and
-  )
-import DA.Optional hiding
-  ( catOptionals
-  , fromSomeNote
-  )
-
-import DA.Optional.Total (fromSomeNote)
-
-
-import DA.Finance.Asset
-import DA.Finance.Asset.Settlement
-import DA.Finance.Base.RollConvention
-import DA.Finance.Instrument.Equity.CashDividend
-import DA.Finance.Instrument.Equity.StockSplit
-import DA.Finance.Trade.Dvp
-import DA.Finance.Trade.Dvp.Settlement
+import Test.Finance.Market.Instrument
+import Daml.Trigger
+import DA.Time qualified as T
+        import DA.Functor ((<&>), void)
 import DA.Finance.Trade.SettlementInstruction
+import MyApp.Fruit (Orange, Watermelon, Mango, Blueberry, Apple)
+import Test.Finance.Market.Dvp
+import DA.Next.Map (Map)
+
+import DA.Finance.Trade.SettlementInstruction
+
+import Something.Utils
+import DA.Next.Map qualified as Map
+import DA.Finance.Trade.Dvp.Settlement
+import Daml.Script
+import DA.Finance.Base.RollConvention
+import DA.Action (when, replicateA, (<=<))
+import DA.Finance.Instrument.Equity.CashDividend
+import DA.Next.Set qualified as S
+import Something.Purchase
+import Something.Bank
+import Something.Currency
+
+import DA.Assert ((===), assertNotEq, (=/=), assertEq)
+import DA.Finance.Instrument.Equity.StockSplit
 import DA.Finance.Types
 import DA.Finance.Utils
+import MyApp.Store qualified as S
+import Something.Default
+import MyApp.Utils qualified as U
+import MyApp.Controller
 
-
+import MyApp.Model
 import Test.Finance.Market.Asset
-import Test.Finance.Market.Dvp
-import Test.Finance.Market.Instrument
 import Test.Finance.Market.Party
-import Test.Finance.Utils
+import Test.Finance.Utils (mapMany, takeFree, (<##>), bounds, catOnly, direct, applyM)
+import MyApp.Utils (mapMany, takeFree, (<##>), bounds, catOnly, direct, applyM)
 import Test.StartupScript
 
-
-import Danban.V3_2.Util
-
-import Danban.V3_2.Board qualified as Board
-import Danban.V3_2.User qualified as User
-
-
--- hello this should
--- be in the rest
 
 
 

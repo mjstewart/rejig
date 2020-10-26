@@ -116,7 +116,7 @@ mkDefaultSettings =
     Settings
       { _sInput = StdInput "demo"
       , _ssrcLang = Daml
-      , _sPrefixGroups = ["Daml", "DA", "DA.Next", "DA.Finance", "Test", "Rejig", "MyApp", "Danban"]
+      , _sPrefixGroups = ["Daml", "DA", "DA.Next", "DA.Finance", "Test.MyApp", "Main.MyApp"]
       , _sDisplayGroupTitle = True
       , _sImportBorderTop = True
       , _sImportBorderBottom = True

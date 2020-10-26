@@ -101,6 +101,7 @@ modHeaderP = do
 
 parseSourceP :: Parser ParsedSource
 parseSourceP = do
+  _srcInitialDocs <- leadingCommentsP
   _srcGhcOpts <- many $ try $ docsP ghcOptionP
   _srcLangExts <- many $ try $ docsP langExtP
   _srcModHeader <- docsP modHeaderP
@@ -119,6 +120,6 @@ leadingCommentsP =
   scn *> (many $
     choice [
       try $ SingleLineComment <$> singleLineCommentP
-    , try $ CommentNewLine <$ (lexeme newline)
+    , try $ CommentNewLine <$ lexeme eol
     , try $ blockCommentP
     ])

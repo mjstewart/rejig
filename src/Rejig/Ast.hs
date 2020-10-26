@@ -203,7 +203,8 @@ data SortedModuleHeader = SortedModuleHeader
   deriving (Show, Eq)
 
 data ParsedSource = ParsedSource
- {  _srcGhcOpts :: [DocString GhcOption]
+ {  _srcInitialDocs :: [Comment]
+  , _srcGhcOpts :: [DocString GhcOption]
   , _srcLangExts :: [DocString LangExt]
   , _srcModHeader :: DocString ModuleHeader
   , _srcRest :: Text
@@ -212,7 +213,8 @@ data ParsedSource = ParsedSource
 
 -- This tool only formats the mod header, the rest of the source code remains untouched
 data SortedParsedSource = SortedParsedSource
- { _ssrcGhcOpts :: [DocString GhcOption]
+ { _ssrcInitialDocs :: [Comment]
+ , _ssrcGhcOpts :: [DocString GhcOption]
  , _ssrcLangExts :: [DocString LangExt]
  , _ssrcModHeader :: DocString SortedModuleHeader
  , _ssrcRest :: Text

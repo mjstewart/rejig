@@ -2,11 +2,13 @@
 
 ***organise (something) differently; rearrange.***
 
-A *"module header"* (import / export declarations) formatting tool for `haskell` and [daml](https://github.com/digital-asset/daml).
+A *"module header"* (import / export declarations) formatting tool for `haskell` and [daml >= 1.6](https://github.com/digital-asset/daml).
 
 This tool provides an opinionated strategy for grouping and deep sorting import/export declarations by *structural components* instead of by simple alphabetical module names.
 
 `rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged.
+
+![Output sample](https://github.com/mjstewart/rejig-vscode-extension/rejig-vscode-sample.gif)
 
 # Installation
 
@@ -147,7 +149,10 @@ where
 --------------------------------------------------------------------------------
 
 -- standard imports
-...
+
+import Alice
+import Bob
+
 ```
 
 combined with `--border-bottom`, frames the import section as a whole.
@@ -162,22 +167,15 @@ where
 
 -- standard imports
 
-...
+import Alice
+import Bob
 
 --------------------------------------------------------------------------------
 
-...rest of source code
-
+... rest of source
 ```
 
 combined with `--border-top`, frames the import section as a whole.
-
-# FAQ
-
-
-
-
-
 
 # Editor integration
 
@@ -185,7 +183,7 @@ combined with `--border-top`, frames the import section as a whole.
 
 [rejig-vscode-extension](https://github.com/mjstewart/rejig-vscode-extension) connects to the underlying `rejig` cli available on the `$PATH`. A command is registered and made available within `haskell` or `daml` files.
 
-1. invoke the command pallet `ctrl+shift+p`
+1. invoke the command pallete `ctrl+shift+p`
 2. `>Rejig Document`
 
 Any errors are written to `rejig-errors.txt` in workspace root.

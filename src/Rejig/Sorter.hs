@@ -32,7 +32,8 @@ sortParsedSource ps = do
   _ssrcModHeader <- sortModHeader $ _docThing $ _srcModHeader ps
 
   pure $ SortedParsedSource
-   { _ssrcLangExts = sort $ _srcLangExts ps
+   { _ssrcInitialDocs = _srcInitialDocs ps
+   , _ssrcLangExts = sort $ _srcLangExts ps
    , _ssrcGhcOpts = sort $ _srcGhcOpts ps
    , _ssrcModHeader = const _ssrcModHeader <$> (_srcModHeader ps)
    , _ssrcRest = _srcRest ps

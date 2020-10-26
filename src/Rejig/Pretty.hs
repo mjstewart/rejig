@@ -159,13 +159,17 @@ instance Pretty SortedParsedSource where
   showPretty x = do
     settings <- ask
 
-    pure $ vcatSep
-     [ prettyVcat settings $ _ssrcGhcOpts x
-     , prettyVcat settings $ _ssrcLangExts x
-     , runPrettyReader' settings $ _ssrcModHeader x
-     , if hasImportsPs x && _sImportBorderBottom settings then borderLine else empty
-     , ttext $ _ssrcRest x
-     ]
+    pure $
+      vcat [
+        toCommentGroups settings $ _ssrcInitialDocs x
+      , vcatSep
+          [ prettyVcat settings $ _ssrcGhcOpts x
+          , prettyVcat settings $ _ssrcLangExts x
+          , runPrettyReader' settings $ _ssrcModHeader x
+          , if hasImportsPs x && _sImportBorderBottom settings then borderLine else empty
+          , ttext $ _ssrcRest x
+          ]
+      ]
 
 instance (Pretty a) => Pretty (DocString a) where
   showPretty x = do

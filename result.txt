@@ -1,55 +1,44 @@
--- Copyright (c) 2019, Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
--- SPDX-License-Identifier: Apache-2.0
+-- rejig formatting example
+
+{-# OPTIONS_GHC -Wall #-}
+{-# OPTIONS_GHC -Wno-all-case #-}
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE RankNTypes #-}
 
-module Danban.V3_2.BoardVj
+module Main.MyApp
 where
 
 --------------------------------------------------------------------------------
 
 -- standard imports
 
-import Prelude hiding
-  ( submit
-  )
+import Base.Utils
+import SomethingElse.Calculation
 
 -- imports by DA*
 
-import DA.Date as D
-
-import DA.Foldable hiding
-  ( all
-  , and
-  )
-import DA.Optional hiding
-  ( catOptionals
-  , fromSomeNote
-  )
+import DA.Assert
 
 import DA.Action
   ( replicateM
   , when
   , (<=<)
   )
-import DA.Assert
-  ( mappend
-  , (!!!)
-  , (===)
+import DA.Foldable
+  ( mapA_
   )
-import DA.Optional.Total
-  ( fromSomeNote
+import DA.Optional
+  ( catOptionals
+  , fromSomeNote
   )
 
-import DA.App qualified as AA
 import DA.Either qualified as E
 import DA.List qualified as L
+import DA.Time qualified as T
 
 -- imports by DA.Finance*
 
-import DA.Finance.Asset
-import DA.Finance.Asset.Settlement
-import DA.Finance.Base.Cats
 import DA.Finance.Base.RollConvention
 import DA.Finance.Instrument.Equity.CashDividend
 import DA.Finance.Instrument.Equity.StockSplit
@@ -64,102 +53,40 @@ import DA.Finance.Utils
 import DA.Next.Map
   ( Map
   )
-import DA.Next.Set
-  ( Set
-  )
 
 import DA.Next.Map qualified as M
-import DA.Next.Map qualified as Map
-import DA.Next.Set qualified as S
-import DA.Next.Set qualified as S
 
--- imports by Daml*
+-- imports by Main.MyApp*
 
-import Daml.Script
-import Daml.Trigger
-import Daml.Zinger
+import Main.MyApp.Bank
+import Main.MyApp.CounterOffer
+import Main.MyApp.Money
+import Main.MyApp.Notes
 
--- imports by Danban*
-
-import Danban.V3_2.Util
-
-import Danban.V3_2.Board qualified as Board
-import Danban.V3_2.User qualified as User
-
--- imports by MyApp*
-
-import MyApp.Central
-import MyApp.Main
-
--- imports by Test*
-
-import Test.Finance.Market.Aa
-import Test.Finance.Market.Ab
-import Test.Finance.Market.Ac
-import Test.Finance.Market.App
-import Test.Finance.Market.Asset
-import Test.Finance.Market.Dvp
-import Test.Finance.Market.Instrument
-import Test.Finance.Market.Party
-import Test.Finance.Utils
-import Test.Lib.X
-import Test.StartupScript
-
--- package qualified
-
-import "ccc" Maple
-
-import "ccc" MapleTree
-  ( berry
-  , water
-  , Car
-      ( Ford
-      , Holden
-      , Honda
-      )
+import Main.MyApp.Currency
+  ( convert
+  , AUD
+  , EUR
+  , NZD
+  , USD
   )
 
---------------------------------------------------------------------------------
+-- imports by Test.MyApp*
 
-{- hello
-  world
--}
---- | A `Map k v` is an associative array data type composed of a
--- collection of key/value pairs of key type `k` and value type `v`
--- such that each possible key appears at most once in the collection.
-newtype Map k v = Map with textMap : TextMap v
-  deriving (Eq, Ord, Foldable.Foldable)
-
--- hello this should
--- be in the rest
-
-
-
-move : Int -> Int -> [a] -> [a]
-move oldIdx newIdx xs =
-  let lowIdx = min oldIdx newIdx
-      highIdx = max oldIdx newIdx
-      (s1, r) = splitAt lowIdx xs
-      (s2, s3) = splitAt (highIdx - lowIdx) r
-      (s2', s3') = if oldIdx < newIdx
-        then (tail s2, head s3 :: head s2 :: tail s3)
-        else (head s3 :: s2, tail s3)
-  in s1 ++ s2' ++ s3'
+import Test.MyApp.Bank
+import Test.MyApp.Money
+import Test.MyApp.Notes
 
 --------------------------------------------------------------------------------
 
--- hello this should
--- be in the rest
+-- | Sorts the module header 
+sortModHeader :: ModuleHeader -> Reader Settings SortedModuleHeader
+sortModHeader mh = do
+  sortedImports <- sortImports $ _modImports mh
+  sortedExports <- sortExports $ _modExports mh
 
-
-
-move : Int -> Int -> [a] -> [a]
-move oldIdx newIdx xs =
-  let lowIdx = min oldIdx newIdx
-      highIdx = max oldIdx newIdx
-      (s1, r) = splitAt lowIdx xs
-      (s2, s3) = splitAt (highIdx - lowIdx) r
-      (s2', s3') = if oldIdx < newIdx
-        then (tail s2, head s3 :: head s2 :: tail s3)
-        else (head s3 :: s2, tail s3)
-  in s1 ++ s2' ++ s3'
+  pure $ SortedModuleHeader
+    { _smodName = _modName mh
+    , _smodExports = sortedExports
+    , _smodImports = sortedImports
+    }
