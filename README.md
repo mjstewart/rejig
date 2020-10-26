@@ -8,7 +8,8 @@ This tool provides an opinionated strategy for grouping and deep sorting import/
 
 `rejig` isn't invasive and doesn't attempt to be a code formatter. It simply formats the module header section and leaves the rest of the source code unchanged.
 
-![Output sample](https://github.com/mjstewart/rejig-vscode-extension/rejig-vscode-sample.gif)
+![Output sample](https://github.com/mjstewart/rejig-vscode-extension/blob/master/rejig-vscode-sample.gif)
+
 
 # Installation
 
