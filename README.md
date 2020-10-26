@@ -38,7 +38,7 @@ chmod +x /opt/rejig
 ln -s -f /opt/rejig /usr/bin/rejig
 ```
 
-I don't use windows so I don't know if this will work, the binary *"should"* work if invokved using `rejig.exe`.
+I don't use windows so I don't know if this will work, the binary *"should"* work if invoked using `rejig.exe`.
 
 # Editor integration
 
@@ -396,6 +396,12 @@ Only 2 pragmas are supported and `OPTIONS_GHC` must be first.
 
 user defined comments can only exist before any pragmas or module header as is the case for a legal title. A parse error or unexpected results will occur if comments are randomly added in the middle of import / export declarations (excluding auto generated `rejig` comments for `--titles` etc.)
 
+## 5. Weird stuff is happening
+
+The parser implements the very basics of haskell 98 module header syntax.
+This means that its very possible not every form of syntax is supported.
+
+The best advice I can give is, change your source code to match the format that the examples provide so the parser is happy, or create an issue if it looks like a bug and I'll happily take a look.
 
 # Implementation
 
