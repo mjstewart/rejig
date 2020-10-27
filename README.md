@@ -8,9 +8,9 @@ This tool provides an opinionated strategy for grouping and deep sorting import/
 
 `rejig` doesn't attempt to be a code formatter, it simply formats the module header section and leaves the rest of the source code unchanged.
 
-\* supports `daml` version >= 1.6.0 only.
+\* supports `daml version >= 1.6.0`.
 
-![Output sample](https://github.com/mjstewart/rejig-vscode-extension/blob/master/rejig-vscode-sample.gif)
+![demo](https://github.com/mjstewart/rejig-vscode-extension/blob/master/rejig-vscode-sample.gif)
 
 
 # Installation
