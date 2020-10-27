@@ -101,7 +101,8 @@ Note: the group titles are enabled via `--titles`
 ```
 -- standard imports
 
-import Something.Utils
+import Something.Base
+import Something.Core
 
 -- imports by DA*
 
@@ -214,7 +215,7 @@ Note: The below snippet is annotated with many comments for explanation and may 
 
   -- comments
 
-  module My.Special.App where
+  module MyApp where
     ( alice            -- functions
     , bob
     , (<$>)            -- symbols
@@ -247,37 +248,37 @@ Note: The below snippet is annotated with many comments for explanation and may 
 
 -- constructor/type
 
-import My.Special.App.Alice
-import My.Special.App.Bob
+import MyApp.Main.Alice
+import MyApp.Main.Bob
 
 -- constructor/type + no things
 
-import My.Special.App.Alice ()
-import My.Special.App.Bob ()
+import MyApp.Main.Alice ()
+import MyApp.Main.Bob ()
 
 -- as
 
-import My.Special.App.Alice as Alice
-import My.Special.App.Bob as Bob
+import MyApp.Main.Alice as Alice
+import MyApp.Main.Bob as Bob
 
 -- qualified
 
-import qualified My.Special.App.Alice
-import qualified My.Special.App.Bob
+import qualified MyApp.Main.Alice
+import qualified MyApp.Main.Bob
 
 -- qualified + as
 
-import qualified My.Special.App.Alice as Alice
-import qualified My.Special.App.Bob as Alice
+import qualified MyApp.Main.Alice as Alice
+import qualified MyApp.Bob as Alice
 
 -- qualified + as + hiding
 
-import qualified My.Special.App.Alice as Alice hiding
+import qualified MyApp.Main.Alice as Alice hiding
   ( alice
   , bob
   ...rest
   )
-import qualified My.Special.App.Bob as Bob hiding
+import qualified MyApp.Main.Bob as Bob hiding
   ( alice
   , bob
   ...rest
@@ -285,12 +286,12 @@ import qualified My.Special.App.Bob as Bob hiding
 
 -- qualified + as + (no hiding)
 
-import qualified My.Special.App.Alice as Alice
+import qualified MyApp.Main.Alice as Alice
   ( alice
   , bob
   ...rest
   )
-import qualified My.Special.App.Bob as Bob
+import qualified MyApp.Main.Bob as Bob
   ( alice
   , bob
   ...rest
@@ -312,29 +313,29 @@ top level groups
 ```
 
 1. constructor/type
-import My.Special.App.Alice
+import MyApp.Main.Alice
 
 2. constructor/type + no things
-import My.Special.App.Alice ()
+import MyApp.Main.Alice ()
 
 3. as
-import My.Special.App.Alice as Alice
+import MyApp.Main.Alice as Alice
 
 4. qualified
-import qualified My.Special.App.Alice
+import qualified MyApp.Main.Alice
 
 5. qualified + as
-import qualified My.Special.App.Alice as Alice
+import qualified MyApp.Main.Alice as Alice
 
 6. qualified + as + hiding
-import qualified My.Special.App.Alice as Alice hiding
+import qualified MyApp.Main.Alice as Alice hiding
   ( alice
   , bob
   ...rest
   )
 
 7. qualified + as + (no hiding)
-import qualified My.Special.App.Alice as Alice
+import qualified MyApp.Main.Alice as Alice
   ( alice
   , bob
   ...rest
