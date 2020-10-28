@@ -1,0 +1,82 @@
+
+-- rejig formatting example
+
+
+-- another comment       1
+-- another comment2
+--
+--
+--          another comment 3
+
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE Batman #-}
+{-# LANGUAGE Apple #-}
+
+-- |
+-- Module      :  Text.Megaparsec.Char
+-- Copyright   :  © 2015–present Megaparsec contributors
+--                © 2007 Paolo Martini
+--                © 1999–2001 Daan Leijen
+-- License     :  FreeBSD
+--
+--
+--
+-- Maintainer  :  Mark Karpov <markkarpov92@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Commonly used character parsers.
+
+{- -}
+{-
+-}
+{-|
+-}
+
+--Megaparsec
+--you
+
+-- some other comment
+
+
+module MyApp.Main
+where
+
+--------------------------------------------------------------------------------
+
+-- standard imports
+
+import Base.Utils
+import MyApp.Test.Notes
+
+-- imports by DA*
+
+import DA.Foldable
+  ( mapA_
+  )
+import DA.Optional
+  ( catOptionals
+  , fromSomeNote
+  )
+
+-- imports by DA.Finance*
+
+import DA.Finance.Types
+import DA.Finance.Utils
+
+--------------------------------------------------------------------------------
+
+
+import App.C
+import App.B
+import App.A
+
+--------------------------------------------------------------------------------
+
+-- | hello
+hello : Text -> Text
+hello x =
+  "hi there " <> x

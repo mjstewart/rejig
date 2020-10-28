@@ -163,9 +163,9 @@ toCommentGroups settings cs =
     f (BlockComment _) (BlockComment _) = True
     f _ _ = False
 
+    -- preserve newline if one exists before starting the next section
     ending =
       case listToMaybe $ reverse cs of
-        Nothing -> empty
         Just CommentNewLine -> newline
         _ -> empty
 
@@ -197,7 +197,7 @@ instance (Pretty a) => Pretty (DocString a) where
 
 instance Pretty Comment where
   showPretty = \case
-    SingleLineComment x -> pure $ text "--" <+> (ttext $ T.strip x)
+    SingleLineComment x -> pure $ text "--" <+> ttext x
     CommentNewLine -> pure empty
     BlockComment x ->
       -- some special handling for haddock block comment so no white space is added when joining

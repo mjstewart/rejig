@@ -147,32 +147,31 @@ parens = between (symbol "(") (symbol ")")
 pragma :: Parser a -> Parser a
 pragma = between (symbol "{-#") (symbol "#-}")
 
-takeTillNewLine :: Parser Text
-takeTillNewLine =
-  takeWhileP Nothing (/= '\n')
+manyTillEol:: Parser Text
+manyTillEol =
+  T.pack <$> manyTill anySingle eol
 
 rejigBorder :: Parser ()
 rejigBorder =
-  void $ lexeme $ takeWhileP Nothing (== '-') <* newline
+  void $ lexeme $ takeWhileP Nothing (== '-') <* eol
 
-rejigTitles :: Parser ()
-rejigTitles  =
- void $ lexeme $ choice
-  [
-    try $ string "-- imports by " <* takeTillNewLine
-  , string "-- standard imports"
-  , string "-- package qualified"
+skipRejigTitles :: Parser ()
+skipRejigTitles  =
+ lexeme $ choice
+  [ void $ try $ string "-- imports by " <* manyTillEol
+  , void $ string "-- standard imports"
+  , void $ string "-- package qualified"
+  , rejigBorder
   ]
 
--- ends with a new line and consumes all space up until the next potential comment
 singleLineCommentP :: Parser Text
 singleLineCommentP =
-  (symbol "--" *> takeTillNewLine) <* newline <* sce
+  string "--" *> manyTillEol
 
 -- collects the inner contents of a {- block comment -}
 blockCommentP :: Parser Comment
 blockCommentP =
-  BlockComment . T.pack <$> ((block "{-" *> manyTill anySingle (string "-}")) <* sce)
+  BlockComment . T.pack <$> (lexeme $ block "{-" *> manyTill anySingle (string "-}"))
   where
     block x = symbol x <* notFollowedBy "#"
 

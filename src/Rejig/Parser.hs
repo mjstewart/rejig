@@ -28,6 +28,7 @@ import Rejig.Lexer
 import Rejig.Lang
   ( Parser
   )
+import qualified Data.Text.IO as TIO
 
 --------------------------------------------------------------------------------
 
@@ -108,7 +109,7 @@ importDeclP = do
 
 importsP :: Parser ImportDecls
 importsP =
-  ImportDecls <$> many (try (rejigTitles *> lexeme importDeclP) <|> lexeme importDeclP)
+  ImportDecls <$> many (try (skipRejigTitles *> lexeme importDeclP) <|> lexeme importDeclP)
 
 modHeaderP :: Parser ModuleHeader
 modHeaderP = do
@@ -141,3 +142,12 @@ leadingCommentsP =
     , try $ CommentNewLine <$ lexeme eol
     , try $ blockCommentP
     ])
+
+parseFile2 :: FilePath -> IO ()
+parseFile2 path = do
+  txt <- TIO.readFile path
+
+  case runParser leadingCommentsP "test" txt of
+    Left bundle -> putStrLn (errorBundlePretty bundle)
+    Right res ->
+      putStrLn $ show res

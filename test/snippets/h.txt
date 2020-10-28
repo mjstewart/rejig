@@ -1,0 +1,52 @@
+-- |
+-- Module      :  Text.Megaparsec.Char
+-- Copyright   :  © 2015–present Megaparsec contributors
+--                © 2007 Paolo Martini
+--                © 1999–2001 Daan Leijen
+-- License     :  FreeBSD
+--
+--
+--
+-- Maintainer  :  Mark Karpov <markkarpov92@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Commonly used character parsers.
+
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TupleSections #-}
+
+module Rejig.Parser
+where
+
+--------------------------------------------------------------------------------
+
+import Control.Monad.Combinators
+import Control.Monad.Reader
+import Text.Megaparsec
+import Text.Megaparsec.Char
+
+import Prelude hiding
+  ( many
+  , some
+  )
+
+import qualified Data.Text as T
+
+-- imports by Rejig*
+
+import Rejig.Ast
+import Rejig.Lexer
+
+
+import App.C
+import App.B
+import App.A
+import Rejig.Lang
+  ( Parser
+  )
+import qualified Data.Text.IO as TIO
+-- | hello
+hello : Text -> Text
+hello x =
+  "hi there " <> x
