@@ -197,15 +197,16 @@ instance (Pretty a) => Pretty (DocString a) where
 
 instance Pretty Comment where
   showPretty = \case
-    SingleLineComment x -> pure $ text "--" <+> ttext x
+    SingleLineComment x -> pure $ hcat [text "--", ttext x]
     CommentNewLine -> pure empty
     BlockComment x ->
       -- some special handling for haddock block comment so no white space is added when joining
       pure $ vcat [
-        if T.isPrefixOf "|" $ T.strip x
-        then hcat [text "{-", ttext $ T.strip x]
-        else text "{-" <+> (ttext $ T.strip x)
-       , text "-}"
+        if T.isPrefixOf "|" x then
+          hcat [text "{-", ttext $ T.stripEnd x]
+        else
+          "{-" <+> (ttext $ T.stripEnd x)
+      , text "-}"
       ]
 
 instance Pretty SortedModuleHeader where

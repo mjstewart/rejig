@@ -22,17 +22,29 @@
 --                © 1999–2001 Daan Leijen
 -- License     :  FreeBSD
 --
---
---
 -- Maintainer  :  Mark Karpov <markkarpov92@gmail.com>
 -- Stability   :  experimental
 -- Portability :  non-portable
 --
 -- Commonly used character parsers.
 
+
+{- x -}
 {- -}
-{-
+{- z -}
+{- one line -}
+{-     should Base
+        here
+                              and
+                   here
+and here-}
+
+{-| should Base
+  here
+  and here
+  and here
 -}
+
 {-|
 -}
 
@@ -41,6 +53,25 @@
 
 -- some other comment
 
+
+{- hello there
+whats up
+
+    NOT MUCH
+is this the end?
+-}
+
+    {- is this working
+
+    -}
+ {- yup should be-}
+-- why owuldnt it
+  -- not sure
+
+-- but lets see right!
+-- but lets see right!
+
+      -- but lets see right!
 
 module MyApp.Main
 where

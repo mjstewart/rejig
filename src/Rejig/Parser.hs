@@ -139,7 +139,7 @@ leadingCommentsP =
   scn *> (many $
     choice [
       try $ SingleLineComment <$> singleLineCommentP
-    , try $ CommentNewLine <$ lexeme eol
+    , try $ CommentNewLine <$ emptyLineP
     , try $ blockCommentP
     ])
 

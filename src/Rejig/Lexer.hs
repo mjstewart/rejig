@@ -164,14 +164,18 @@ skipRejigTitles  =
   , rejigBorder
   ]
 
+emptyLineP :: Parser ()
+emptyLineP =
+  sce <* eol
+
 singleLineCommentP :: Parser Text
 singleLineCommentP =
-  string "--" *> manyTillEol
+  sce *> (string "--" *> manyTillEol)
 
 -- collects the inner contents of a {- block comment -}
 blockCommentP :: Parser Comment
 blockCommentP =
-  BlockComment . T.pack <$> (lexeme $ block "{-" *> manyTill anySingle (string "-}"))
+  sce *> (BlockComment . T.pack <$> (block "{-" *> manyTill anySingle ((string "-}") <* eol)))
   where
     block x = symbol x <* notFollowedBy "#"
 

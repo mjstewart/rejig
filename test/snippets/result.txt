@@ -1,22 +1,81 @@
---  |
---  Module      :  Text.Megaparsec.Char
---  Copyright   :  © 2015–present Megaparsec contributors
---                 © 2007 Paolo Martini
---                 © 1999–2001 Daan Leijen
---  License     :  FreeBSD
--- 
--- 
--- 
---  Maintainer  :  Mark Karpov <markkarpov92@gmail.com>
---  Stability   :  experimental
---  Portability :  non-portable
--- 
---  Commonly used character parsers.
+-- rejig formatting example
 
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
+-- another comment       1
+-- another comment2
+--
+--
+--          another comment 3
 
-module Rejig.Parser
+{-# LANGUAGE Apple #-}
+{-# LANGUAGE Batman #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+
+-- |
+-- Module      :  Text.Megaparsec.Char
+-- Copyright   :  © 2015–present Megaparsec contributors
+--                © 2007 Paolo Martini
+--                © 1999–2001 Daan Leijen
+-- License     :  FreeBSD
+--
+-- Maintainer  :  Mark Karpov <markkarpov92@gmail.com>
+-- Stability   :  experimental
+-- Portability :  non-portable
+--
+-- Commonly used character parsers.
+
+{- x
+-}
+{- 
+-}
+{- z
+-}
+{- one line
+-}
+{- should Base
+        here
+                              and
+                   here
+and here
+-}
+
+{-| should Base
+  here
+  and here
+  and here
+-}
+
+{-|
+-}
+
+--Megaparsec
+--you
+
+-- some other comment
+
+{- hello there
+whats up
+
+    NOT MUCH
+is this the end?
+-}
+
+{- is this working
+-}
+{- yup should be
+-}
+
+-- why owuldnt it
+-- not sure
+
+-- but lets see right!
+-- but lets see right!
+
+-- but lets see right!
+
+module MyApp.Main
 where
 
 --------------------------------------------------------------------------------
@@ -26,24 +85,23 @@ where
 import App.A
 import App.B
 import App.C
-import Control.Monad.Combinators
-import Control.Monad.Reader
-import Rejig.Ast
-import Rejig.Lexer
-import Text.Megaparsec
-import Text.Megaparsec.Char
+import Base.Utils
+import MyApp.Test.Notes
 
-import Prelude hiding
-  ( many
-  , some
+-- imports by DA*
+
+import DA.Foldable
+  ( mapA_
+  )
+import DA.Optional
+  ( catOptionals
+  , fromSomeNote
   )
 
-import Rejig.Lang
-  ( Parser
-  )
+-- imports by DA.Finance*
 
-import Data.Text qualified as T
-import Data.Text.IO qualified as TIO
+import DA.Finance.Types
+import DA.Finance.Utils
 
 --------------------------------------------------------------------------------
 
