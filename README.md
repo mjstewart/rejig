@@ -395,7 +395,7 @@ Only 2 pragmas are supported and `OPTIONS_GHC` must occur first.
 
 ## 4. My comments are disappearing
 
-user defined comments can only exist before pragmas and the module header to cater for things like legal/copyright notices etc. Unexpected results will occur if comments are scattered within import / export declarations.
+user defined comments can only exist before the module header or pragmas to cater for things like legal/copyright notices etc. Unexpected results will occur if comments are scattered within import / export declarations.
 
 `rejig` automatically manages any comments it generates through its various flags such as `--titles`.
 
