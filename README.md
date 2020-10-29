@@ -405,7 +405,7 @@ The parser implements the very basics of haskell 98 module header syntax in a ve
 
 The best advice I can give is to try limit the amount of comments since `rejig` will reorder code and potentially shift comments to somewhere that no longer make any sense.
 
-Generally the issue will be relating to having random comments scattered within import statements which causes the parser to exit early at the point of failure and dump the rest of the source code unmodified.
+Generally the issue will be relating to having random comments scattered within import statements. This causes the parser to exit early at the failure point and dump the rest of the source code unmodified.
 
 Please create an issue if it looks like a bug and I'll happily take a look.
 
