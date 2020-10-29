@@ -73,17 +73,81 @@ is this the end?
 
       -- but lets see right!
 
-module MyApp.Main
+module Rejig.ImportSort
+  ( toSortedGroups
+  , Q.Z.map
+  , tiger
+  , Kettle (..)
+  , module Cat.Dog.Y
+  , cat
+  , Month (Jan, Feb, Apr, Aug, Nov, Dec)
+  , Cal.Month (Bal.Cal.Bag, Cal.Jan, App.Abbs, Z.Aggr, Bal.Cal.Feb, Z.Apr, App.Aug, Lang.Nov, A.B.CDec)
+  , Speed (High, Med, (<|||>), mapple, date, app, Slow, (<***>) )
+  , module Cat
+  , apple
+  , Apple (..)
+  , A.B.C.manifold
+  , A.B.C.egg
+  , module Cat.Apple.Banana
+  , Kite (..)
+  , Bag.Unite (C.Fish)
+  , module Cat.Apple.Accord
+  , A.T.cat
+  , A.B.fold
+  , Cattle (..)
+  )
 where
 
---------------------------------------------------------------------------------
+         import AB
+
+      import AA
 
 -- standard imports
 
 import Base.Utils
 import MyApp.Test.Notes
 
--- imports by DA*
+-- package qualified
+
+import DA.Foldable
+  ( mapA_
+  )
+
+    -- imports by DA.*
+
+import DA.Optional
+  ( catOptionals
+  , fromSomeNote
+  )
+
+---------------------------------------------------------
+import DA.Finance.Types
+import DA.Finance.App
+      -- package qualified
+import DA.Finance.Utils
+
+
+import App.D
+
+-- standard imports
+import App.C
+import App.B
+import App.A
+
+
+      import AD
+
+      import AC
+
+
+
+-- standard imports
+
+--------------------------------------------------------------------------------
+
+import Base.Utils
+import MyApp.Test.Notes
+
 
 import DA.Foldable
   ( mapA_
@@ -93,21 +157,24 @@ import DA.Optional
   , fromSomeNote
   )
 
--- imports by DA.Finance*
-
 import DA.Finance.Types
+import DA.Finance.App
 import DA.Finance.Utils
 
---------------------------------------------------------------------------------
 
+import App.D
 
 import App.C
 import App.B
 import App.A
 
 --------------------------------------------------------------------------------
+            import AAD
 
--- | hello
+            import DA.Action.App
+
+
+   -- | hello
 hello : Text -> Text
 hello x =
   "hi there " <> x

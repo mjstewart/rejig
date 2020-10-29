@@ -1,11 +1,14 @@
 -- hello
 
-{-# OPTIONS_GHC -Wall #-}
+
 {-# OPTIONS_GHC -Wno-all-case #-}
 
+{-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE RankNTypes #-}
+
+ {-# LANGUAGE RankNTypes #-}
+
+   {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- |
 -- Module      :  Text.Megaparsec.Char
@@ -20,20 +23,16 @@
 --
 -- Commonly used character parsers.
 
-{- x
--}
-{- 
--}
-{- z
--}
-{- one line
--}
-{- should Base
+
+{- x -}
+{- -}
+{- z -}
+{- one line -}
+{-     should Base
         here
                               and
                    here
-and here
--}
+and here-}
 
 {-| should Base
   here
@@ -49,6 +48,7 @@ and here
 
 -- some other comment
 
+
 {- hello there
 whats up
 
@@ -56,18 +56,17 @@ whats up
 is this the end?
 -}
 
-{- is this working
--}
-{- yup should be
--}
+    {- is this working
 
+    -}
+ {- yup should be-}
 -- why owuldnt it
--- not sure
+  -- not sure
 
 -- but lets see right!
 -- but lets see right!
 
--- but lets see right!
+      -- but lets see right!
 
 module Rejig.ImportSort
   ( tiger
@@ -78,10 +77,16 @@ module Rejig.ImportSort
   )
 where
 
+import Xa2
+
+     import Xc as C
+import Xa as A
+
 --------------------------------------------------------------------------------
 
+import DA.Act.D
 -- standard imports
-
+  import DA.Act.E
 import AA
 import AAD
 import AB
@@ -97,24 +102,16 @@ import App.D
 import App.D
 import Base.Utils
 import Base.Utils
+import DA.Event
 import MyApp.Test.Notes
 import MyApp.Test.Notes
-import Xa2
 import Xe
 
-import Xa as A
-import Xc as C
+import DA.Action.Egg
 
 -- imports by DA*
 
-import DA.Act.D
-import DA.Act.E
 import DA.Action.App
-import DA.Action.Egg
-import DA.Apple
-import DA.Ball
-import DA.Dog
-import DA.Event
 
 import DA.Foldable
   ( mapA_
@@ -138,7 +135,13 @@ import DA.Finance.Types
 import DA.Finance.Utils
 import DA.Finance.Utils
 
+  import DA.Apple
 --------------------------------------------------------------------------------
+
+         import DA.Ball
+
+  import DA.Dog
+
 
 -- | hello
 hello : Text -> Text

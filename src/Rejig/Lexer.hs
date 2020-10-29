@@ -133,6 +133,11 @@ symbol = L.symbol scn
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme scn
 
+-- | ignore rejig auto gen comments
+rejigLexeme :: Parser a -> Parser a
+rejigLexeme = L.lexeme $
+  L.space space1 skipRejigTitles empty
+
 comma :: Parser ()
 comma =
   void $ symbol ","
@@ -157,12 +162,12 @@ rejigBorder =
 
 skipRejigTitles :: Parser ()
 skipRejigTitles  =
- lexeme $ choice
-  [ void $ try $ string "-- imports by " <* manyTillEol
-  , void $ string "-- standard imports"
-  , void $ string "-- package qualified"
-  , rejigBorder
-  ]
+  choice
+   [ try $ keyword "-- standard imports"
+   , try $ void $ string "-- imports by " <* manyTillEol
+   , try $ keyword "-- package qualified"
+   , try rejigBorder
+   ]
 
 emptyLineP :: Parser ()
 emptyLineP =
@@ -175,7 +180,7 @@ singleLineCommentP =
 -- collects the inner contents of a {- block comment -}
 blockCommentP :: Parser Comment
 blockCommentP =
-  sce *> (BlockComment . T.pack <$> (block "{-" *> manyTill anySingle ((string "-}") <* eol)))
+  sce *> (BlockComment . T.pack <$> (block "{-" *> manyTill anySingle (string "-}" <* eol)))
   where
     block x = symbol x <* notFollowedBy "#"
 

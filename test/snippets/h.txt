@@ -1,8 +1,93 @@
--- rejig formatting example
+-- hello
+
+module Rejig.ImportSort
+  ( toSortedGroups
+  , Q.Z.map
+  , tiger
+  , Kettle (..)
+  , Cattle (..)
+  )
+where
+
+  import Xe
+  
+-- package qualified
+---------------------------------------------------------
+
+         import AB
+
+      import AA
+  -- standard imports
+
+import Base.Utils
+import MyApp.Test.Notes
 
 
--- another comment       1
--- another comment2
---
---
---          another comment 3
+import DA.Foldable
+  ( mapA_
+  )
+
+
+import DA.Optional
+  ( catOptionals
+  , fromSomeNote
+  )
+
+---------------------------------------------------------
+import DA.Finance.Types
+import DA.Finance.App
+import DA.Finance.Utils
+
+
+import App.D
+
+import App.C
+import App.B
+import App.A
+
+-- imports by DA.*
+      import AD
+
+      import AC
+
+
+
+
+--------------------------------------------------------------------------------
+
+import Base.Utils
+import MyApp.Test.Notes
+
+
+import DA.Foldable
+  ( mapA_
+  )
+    import DA.Optional
+  ( catOptionals
+  , fromSomeNote
+  )
+
+
+import DA.Finance.Types
+          import DA.Finance.App
+import DA.Finance.Utils
+
+
+                    import App.D
+
+import App.C
+import App.B
+
+
+                     import App.A
+
+--------------------------------------------------------------------------------
+
+            import AAD
+
+            import DA.Action.App
+
+-- | hello
+hello : Text -> Text
+hello x =
+  "hi there " <> x

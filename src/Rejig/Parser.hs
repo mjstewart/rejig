@@ -19,7 +19,6 @@ import Prelude hiding
   )
 
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 
 -- imports by Rejig*
 
@@ -29,6 +28,7 @@ import Rejig.Lexer
 import Rejig.Lang
   ( Parser
   )
+import qualified Data.Text.IO as TIO
 
 --------------------------------------------------------------------------------
 
@@ -109,13 +109,13 @@ importDeclP = do
 
 importsP :: Parser ImportDecls
 importsP =
-  ImportDecls <$> many (try (skipRejigTitles *> lexeme importDeclP) <|> lexeme importDeclP)
+  ImportDecls <$> many (rejigLexeme importDeclP)
 
 modHeaderP :: Parser ModuleHeader
 modHeaderP = do
   _modName <- keyword "module" *> qconid
-  _modExports <- (ieP <|> pure []) <* keyword "where"
-  _modImports <- (try rejigBorder *> importsP <|> importsP)
+  _modExports <- (ieP <|> pure []) <* rejigLexeme (keyword "where")
+  _modImports <- importsP
   pure $ ModuleHeader {..}
 
 parseSourceP :: Parser ParsedSource
@@ -124,10 +124,14 @@ parseSourceP = do
   _srcGhcOpts <- many $ try $ docsP ghcOptionP
   _srcLangExts <- many $ try $ docsP langExtP
   _srcModHeader <- docsP modHeaderP
-  _srcRest <- T.pack <$> (try (rejigBorder *> everythingElse) <|> everythingElse)
+  _srcRest <- T.pack <$> everythingElse
   pure $ ParsedSource {..}
   where
     everythingElse = manyTill anySingle eof
+
+t2 :: Parser (DocString ModuleHeader)
+t2 =
+  docsP modHeaderP
 
 -- | Collects any comments that occur before `p`.
 docsP :: Parser a -> Parser (DocString a)
@@ -147,7 +151,8 @@ parseFile2 :: FilePath -> IO ()
 parseFile2 path = do
   txt <- TIO.readFile path
 
-  case runParser leadingCommentsP "test" txt of
+  -- case runParser leadingCommentsP "test" txt of
+  case runParser parseSourceP "test" txt of
     Left bundle -> putStrLn (errorBundlePretty bundle)
     Right res ->
       putStrLn $ show res
