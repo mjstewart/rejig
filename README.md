@@ -393,7 +393,7 @@ Only 2 pragmas are supported and `OPTIONS_GHC` must occur first.
   {-# LANGUAGE AllowAmbiguousTypes #-}
   ```
 
-## 4. My comments are disappearing
+## 4. Disappearing comments
 
 user defined comments can only exist before the module header or pragmas to cater for things like legal/copyright notices etc. Unexpected results will occur if comments are scattered within import / export declarations.
 
