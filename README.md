@@ -402,7 +402,7 @@ user defined comments can only exist before the module header or pragmas to cate
 ## 5. Nothing is being formatted
 
 The parser implements the very basics of haskell 98 module header syntax
-implying that its very likely that not all syntax is supported.
+implying its very likely that not all syntax is supported.
 
 The best advice I can give is, change your source code to match the format that the examples provide so the parser is happy.
 
