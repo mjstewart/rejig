@@ -401,10 +401,9 @@ user defined comments can only exist before the module header or pragmas to cate
 
 ## 5. Nothing is being formatted
 
-The parser implements the very basics of haskell 98 module header syntax
-implying its very likely that not all syntax is supported.
+The parser implements the very basics of haskell 98 module header syntax in a very primitive way. This implies its very likely that not all syntax is supported and I don't provide any guarantees that it works 100% of the time.
 
-The best advice I can give is, change your source code to match the format that the examples provide so the parser is happy.
+The best advice I can give is to try limit the amount of comments since `rejig` will reorder code and potentially shift comments to somewhere that no longer make any sense.
 
 Generally the issue will be relating to having random comments scattered within import statements which causes the parser to exit early at the point of failure and dump the rest of the source code unmodified.
 
