@@ -19,6 +19,7 @@ import Prelude hiding
   )
 
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 -- imports by Rejig*
 
@@ -28,7 +29,6 @@ import Rejig.Lexer
 import Rejig.Lang
   ( Parser
   )
-import qualified Data.Text.IO as TIO
 
 --------------------------------------------------------------------------------
 

@@ -393,16 +393,22 @@ Only 2 pragmas are supported and `OPTIONS_GHC` must be first.
   {-# LANGUAGE AllowAmbiguousTypes #-}
   ```
 
-## 4. Missing comments
+## 4. My comments are disappearing
 
-user defined comments can only exist before any pragmas or module header as is the case for a legal title. A parse error or unexpected results will occur if comments are randomly added in the middle of import / export declarations (excluding auto generated `rejig` comments for `--titles` etc.)
+user defined comments can only exist before pragmas and the module header catering for legal copyright notice etc. Unexpected results will occur if comments are scattered within import / export declarations.
 
-## 5. Weird stuff is happening
+`rejig` automatically manages any comments it generates through its various flags such as `--titles`.
 
-The parser implements the very basics of haskell 98 module header syntax.
-This means that its very possible not every form of syntax is supported.
+## 5. Nothing is being formatted
 
-The best advice I can give is, change your source code to match the format that the examples provide so the parser is happy, or create an issue if it looks like a bug and I'll happily take a look.
+The parser implements the very basics of haskell 98 module header syntax
+implying that its very likely that not all syntax is supported.
+
+The best advice I can give is, change your source code to match the format that the examples provide so the parser is happy.
+
+Generally the issue will be relating to having random comments scattered within import statements which causes the parser to exit early at the point of failure and dump the rest of the source code unmodified.
+
+Please create an issue if it looks like a bug and I'll happily take a look.
 
 # Implementation
 
