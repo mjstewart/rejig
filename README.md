@@ -376,7 +376,7 @@ Within each top level group above, a nested subsort is performed using the follo
 
 # FAQ
 
-## 1. Is there an editor plugin?
+## 1. Are there any editor plugins?
 
 [vscode](#Editor-Integration)
 
@@ -386,7 +386,7 @@ Within each top level group above, a nested subsort is performed using the follo
 
 ## 3. pragma parse errors
 
-Only 2 pragmas are supported and `OPTIONS_GHC` must be first.
+Only 2 pragmas are supported and `OPTIONS_GHC` must occur first.
 
   ```
   {-# OPTIONS_GHC -Wall #-}
@@ -395,7 +395,7 @@ Only 2 pragmas are supported and `OPTIONS_GHC` must be first.
 
 ## 4. My comments are disappearing
 
-user defined comments can only exist before pragmas and the module header catering for legal copyright notice etc. Unexpected results will occur if comments are scattered within import / export declarations.
+user defined comments can only exist before pragmas and the module header to cater for things like legal/copyright notices etc. Unexpected results will occur if comments are scattered within import / export declarations.
 
 `rejig` automatically manages any comments it generates through its various flags such as `--titles`.
 
